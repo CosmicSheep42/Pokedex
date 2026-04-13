@@ -1,0 +1,164 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+:root {
+    --title-color: var(--type-color);
+    --bg-dark: #1a2a3a;
+    --bg-darker: #0a0f1a;
+    --card-bg: #f8f9fa;
+    --text-dark: #333;
+}
+
+body {
+    background: radial-gradient(circle at 20% 30%, var(--bg-dark), var(--bg-darker));
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: system-ui, 'Segoe UI', 'Helvetica Neue', sans-serif;
+}
+
+.app-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;    
+}
+
+/* Phone Frame - Proporção de celular real 9:16 */
+.phone-frame {
+    width: auto;
+    height: auto;
+    max-width: 80vw;
+    max-height: 80vh;
+    aspect-ratio: 9 / 16;
+    background: #d91f1f;
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+    font-size: 16px;
+}
+
+/* Garantir que o frame não ultrapasse os limites da tela */
+@media (min-aspect-ratio: 9/16) {
+    .phone-frame {
+        max-width: 95vh;
+        max-height: 95vh;
+    }
+}
+
+/* Divider */
+.divider {
+    width: 260px;
+    height: 3px;
+    background: var(--title-color, #667eea);
+    border-radius: 2px;
+    margin: 0 auto 0.5rem auto;
+}
+
+.scanner-shell {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #e53935 0%, #c81818 100%);
+    border-radius: 18px;
+    overflow: hidden;
+    height: 100%;
+}
+
+.scanner-top {
+    width: 100%;
+    height: 13%;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 3;
+    background: linear-gradient(180deg, #ff5b57 0%, #d91f1f 100%);
+    border-bottom: 4px solid #8f0d0d;
+    box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.18), 0 6px 0 rgba(120, 10, 10, 0.35);
+}
+
+.scanner-top::after {
+    content: "● ● ●";
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: #7eefff;
+}
+
+.scanner-shell-content {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: #f4f4f6;
+}
+
+.scanner-bottom {
+    width: 100%;
+    height: 13%;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    background: #d91f1f;
+    border-top: 4px solid #8f0d0d;
+    box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.15), 0 -6px 0 rgba(120, 10, 10, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scanner-bottom-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bottom-text {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.95);
+    font-family: monospace;
+}
+
+/* Carrossel */
+.carousel-vertical {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    cursor: grab;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.carousel-vertical:active {
+    cursor: grabbing;
+}
+
+.screen-page {
+    height: auto;
+    padding: 1rem;
+}
+
+/* Responsivity */
+@media (max-width: 380px) {
+    .phone-frame { font-size: 14px; }
+    .scanner-top::after {
+        font-size: 20px;
+        right: 14px;
+    }
+}
+
+@media (min-width: 801px) {
+    .phone-frame { font-size: 15px; }
+}

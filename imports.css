@@ -1,0 +1,8 @@
+@import url(./styles/global.css);
+
+/* Pages */
+@import url(./styles/modules/upload.css);
+@import url(./styles/modules/basic.css);
+@import url(./styles/modules/flavor.css);
+@import url(./styles/modules/stats.css);
+@import url(./styles/modules/sprites.css);

@@ -1,0 +1,145 @@
+.pokemon-header {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.pokemon-name {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--title-color, #667eea);
+    margin-bottom: 0.5rem;
+}
+
+.pokemon-subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--title-color, #667eea);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+
+/* Info and Sprite */
+.info-sprite-row {
+    display: flex;
+    flex-wrap: wrap;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, var(--card-bg) 0%, #f0f2f5 100%);
+}
+
+.info-column {
+    flex: 1;
+    min-width: 140px;
+}
+
+.sprite-column {
+    padding: 0.75rem;
+    min-width: 140px;
+}
+
+.sprite-image {
+    width: 100%;
+    max-width: 140px;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    margin: 0 auto;
+    display: block;
+}
+
+.sprite-button {
+    margin-top: 0.3rem;
+    background: var(--title-color, #667eea);
+    border: none;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 1.5rem;
+    font-size: 0.65rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+    width: 100%;
+}
+
+.sprite-button:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+.sprite-button:active {
+    transform: scale(0.98);
+}
+
+.info-card {
+    padding: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.4rem 0;
+}
+
+
+.info-label {
+    font-weight: 600;
+    color: #272b2e;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 0.85rem;
+}
+
+
+/* Type image */
+.types-container-icons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+
+.type-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.info-item-types {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.type-icon {
+    width: 65px;
+    object-fit: contain;
+    display: block;
+}
+
+@media (max-width: 380px) {
+    .info-sprite-row {
+        flex-direction: column;
+    }
+
+    .info-column,
+    .sprite-column {
+        width: 100%;
+    }
+
+    .types-container-icons {
+        justify-content: flex-start;
+    }
+}

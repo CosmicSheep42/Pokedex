@@ -1,0 +1,39 @@
+.stat-bar {
+    margin: 0.5rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--title-color, #667eea);
+    margin-bottom: 0.75rem;
+    margin-top: -2rem;
+}
+
+.stat-name {
+    display: inline-block;
+    width: 6.5rem;
+    font-weight: bold;
+    font-size: 0.7rem;
+}
+
+.stat-bar-bg {
+    display: inline-block;
+    width: calc(100% - 7rem);
+    height: 1.1rem;
+    background: #e0e0e0;
+    border-radius: 0.55rem;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    background: var(--title-color, #667eea);
+    border-radius: 0.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.3rem;
+    color: white;
+    font-size: 0.6rem;
+}
+
