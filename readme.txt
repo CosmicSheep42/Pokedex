@@ -28,7 +28,7 @@ https://cosmicsheep42.github.io/Pokedex/
 - Modular architecture
 - PokeAPI for Pokémon data  
 
-### Backend (Render)
+### Backend (HuggingFace Spaces)
 
 - Python + FastAPI  
 - Hugging Face Transformers
