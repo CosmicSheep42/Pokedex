@@ -1,11 +1,8 @@
 export const CONFIG = {
-    REQUEST_TIMEOUT: 30000,
-     BACKEND_URL: "https://cosmicsheep42-backend.hf.space/classify",
-     POKEAPI: {
+    REQUEST_TIMEOUT: 90000,
+    MAX_FILE_SIZE: 10 * 1024 * 1024,
+    BACKEND_URL: "https://cosmicsheep42-backend.hf.space/classify",
+    POKEAPI: {
         BASE_URL: "https://pokeapi.co/api/v2"
     }
 };
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CONFIG;
-}

@@ -1,6 +1,6 @@
 import { fetchData } from "./core/fetchData.js";
 import { renderResult } from "./UI/renderResults.js";
-import { setHandler, showScanner, createUploadButton } from "./modules/upload.js";
+import { setHandler, showScanner, createUploadButton, validateImageFile } from "./modules/upload.js";
 import { getErrorMessage } from "./core/errors.js";
 import { CONFIG } from "../config.js";
 
@@ -23,32 +23,43 @@ function setBottomToTextMode() {
     const bottomContent = document.querySelector('.scanner-bottom-content');
     if (!bottomContent) return;
     
-    bottomContent.innerHTML = '<span class="bottom-text">POKÉDEX</span>';
+    bottomContent.replaceChildren();
+    const text = document.createElement('span');
+    text.className = 'bottom-text';
+    text.textContent = 'POKÉDEX';
+    bottomContent.appendChild(text);
 }
 
 function setBottomToUploadMode() {
     const bottomContent = document.querySelector('.scanner-bottom-content');
     if (!bottomContent) return;
     
-    bottomContent.innerHTML = '';
+    bottomContent.replaceChildren();
     const uploadButton = createUploadButton('scanner-bottom-upload-btn');
     bottomContent.appendChild(uploadButton);
 }
 
 async function handleImageSelected(file) {
     if (isProcessing) return;
+    const validationError = validateImageFile(file, CONFIG.MAX_FILE_SIZE);
+    if (validationError) {
+        showStatus(validationError, true);
+        return;
+    }
     
     setLoadingState(true);
+    showStatus('Identifying your Pokémon…');
     
     try {
         const result = await FetchData.execute(file);
         renderResult(result);
         setBottomToUploadMode();
+        showStatus('');
     } catch (error) {
         console.error("Error identifying Pokémon:", error);
-        alert(getErrorMessage(error));
         showScanner();
         setBottomToTextMode();
+        showStatus(getErrorMessage(error), true);
     } finally {
         setLoadingState(false);
     }
@@ -64,10 +75,15 @@ function setLoadingState(isLoading) {
     
     const hint = document.querySelector('.scanner-hint');
     if (hint) {
-        hint.innerHTML = isLoading 
-            ? "Identifying<br>your Pokemon..." 
-            : "Tap to identify<br>your Pokemon";
+        hint.textContent = isLoading ? 'Identifying your Pokémon…' : 'Tap to identify your Pokémon';
     }
+}
+
+function showStatus(message, isError = false) {
+    const status = document.getElementById('statusMessage');
+    status.textContent = message;
+    status.hidden = !message;
+    status.classList.toggle('is-error', isError);
 }
 
 init();

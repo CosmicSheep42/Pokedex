@@ -1,18 +1,22 @@
+import { escapeHtml, safeImageUrl } from "../UI/safeHtml.js";
+
 export function renderBasic(data, name, id, speciesData) {
-    const englishGenus = speciesData.genera?.find(g => g.language.name === 'en');
+    const englishGenus = Array.isArray(speciesData?.genera)
+        ? speciesData.genera.find(g => g?.language?.name === 'en') : null;
 
-    const defaultSprite = data.sprites.front_default || '';
-    const shinySprite = data.sprites.front_shiny || '';
+    const defaultSprite = safeImageUrl(data.sprites?.front_default);
+    const shinySprite = safeImageUrl(data.sprites?.front_shiny);
 
-    const typesHtml = data.types.map(t => {
-        const typeName = t.type.name;
+    const typesHtml = (Array.isArray(data.types) ? data.types : []).map(t => {
+        const typeName = t?.type?.name;
+        if (!/^(normal|fire|water|electric|grass|ice|fighting|poison|ground|flying|psychic|bug|rock|ghost|dragon|dark|steel|fairy)$/.test(typeName)) return '';
         const typeNameCapitalized = typeName.charAt(0).toUpperCase() + typeName.slice(1);
 
         return `
             <div class="type-icon-wrapper">
                 <img
                     src="styles/types/${typeNameCapitalized}.png"
-                    alt="${typeName}"
+                    alt="${typeName} type"
                     title="${typeName.toUpperCase()}"
                     class="type-icon"
                 >
@@ -23,11 +27,11 @@ export function renderBasic(data, name, id, speciesData) {
     return `
         <div class="pokemon-header">
             <div class="pokemon-name">
-                ${name}
+                ${escapeHtml(name)}
             </div>
             <div class="divider"></div>
             <div class="pokemon-subtitle">
-                ${englishGenus?.genus || 'N/A'}
+                ${escapeHtml(englishGenus?.genus || 'N/A')}
             </div>
         </div>
 
@@ -36,17 +40,17 @@ export function renderBasic(data, name, id, speciesData) {
                 <div class="info-card">
                     <div class="info-item">
                         <span class="info-label">ID</span>
-                        <span class="info-value">#${String(id).padStart(4, '0')}</span>
+                        <span class="info-value">#${escapeHtml(String(id ?? 'N/A').padStart(4, '0'))}</span>
                     </div>
 
                     <div class="info-item">
                         <span class="info-label">Height</span>
-                        <span class="info-value">${(data.height / 10).toFixed(1)} m</span>
+                        <span class="info-value">${Number.isFinite(data.height) ? (data.height / 10).toFixed(1) + ' m' : 'N/A'}</span>
                     </div>
 
                     <div class="info-item">
                         <span class="info-label">Weight</span>
-                        <span class="info-value">${(data.weight / 10).toFixed(1)} kg</span>
+                        <span class="info-value">${Number.isFinite(data.weight) ? (data.weight / 10).toFixed(1) + ' kg' : 'N/A'}</span>
                     </div>
 
                     <div class="info-item info-item-types">
@@ -62,14 +66,16 @@ export function renderBasic(data, name, id, speciesData) {
                 <img
                     id="pokemonSprite"
                     class="sprite-image"
-                    src="${defaultSprite}"
-                    alt="${name} sprite"
+                    ${defaultSprite ? `src="${defaultSprite}"` : ''}
+                    alt="${escapeHtml(name)} sprite"
+                    ${defaultSprite ? '' : 'hidden'}
                 >
                 <button
                     id="toggleSpriteBtn"
                     class="sprite-button"
                     data-default="${defaultSprite}"
                     data-shiny="${shinySprite}"
+                    ${shinySprite && defaultSprite ? '' : 'disabled'}
                 >
                     Normal
                 </button>
@@ -88,18 +94,17 @@ export function initSpriteToggle() {
     const shinySrc = toggleBtn.dataset.shiny;
     let isShiny = false;
 
-    const newToggleBtn = toggleBtn.cloneNode(true);
-    toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
-
-    newToggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', () => {
         isShiny = !isShiny;
 
         if (isShiny && shinySrc) {
             img.src = shinySrc;
-            newToggleBtn.innerHTML = 'Shiny';
+            toggleBtn.textContent = 'Shiny';
         } else {
             img.src = defaultSrc;
-            newToggleBtn.innerHTML = 'Normal';
+            toggleBtn.textContent = 'Normal';
         }
     });
+    img.addEventListener('error', () => { img.hidden = true; });
+    img.addEventListener('load', () => { img.hidden = false; });
 }

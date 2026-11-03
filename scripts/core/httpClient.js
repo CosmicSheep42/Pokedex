@@ -1,4 +1,4 @@
-import { AppError, HttpError, TimeoutError, NetworkError } from "./errors.js";
+import { AppError, HttpError, TimeoutError, NetworkError, InvalidResponseError } from "./errors.js";
 
 export class HttpClient {
     async request(url, options = {}) {
@@ -13,12 +13,13 @@ export class HttpClient {
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
-            const response = await fetch(url, {
-                method,
-                headers,
-                body,
-                signal: controller.signal
-            });
+            let response;
+            try {
+                response = await fetch(url, { method, headers, body, signal: controller.signal });
+            } catch (error) {
+                if (error instanceof TypeError) throw NetworkError();
+                throw error;
+            }
 
             const payload = await this.#readPayload(response);
 
@@ -39,7 +40,7 @@ export class HttpClient {
                 throw error;
             }
 
-            throw NetworkError();
+            throw error;
         } finally {
             clearTimeout(timeoutId);
         }
@@ -47,16 +48,21 @@ export class HttpClient {
 
     async #readPayload(response) {
         const contentType = response.headers.get("content-type") || "";
-        if (contentType.includes("application/json")) {
-            return response.json();
+        if (!contentType.includes("application/json")) {
+            if (response.ok) throw InvalidResponseError();
+            return response.text();
         }
-        return response.text();
+        try {
+            return await response.json();
+        } catch {
+            throw InvalidResponseError();
+        }
     }
 
     #extractErrorMessage(payload) {
         if (!payload) return null;
         if (typeof payload === "string") return payload;
-        if (typeof payload === "object" && payload.error) return payload.error;
+        if (typeof payload === "object") return payload.detail || payload.error || payload.message || null;
         return null;
     }
 }
