@@ -10,6 +10,12 @@ export function buildCarousel(slidesArray, pokemonData = null) {
     if (!carousel) return;
 
     initDragScroll(carousel);
+    if (!carousel.dataset.imageErrorInitialized) {
+        carousel.addEventListener('error', event => {
+            if (event.target instanceof HTMLImageElement) event.target.hidden = true;
+        }, true);
+        carousel.dataset.imageErrorInitialized = 'true';
+    }
     const typeColor = applyColor(pokemonData);
 
     carousel.innerHTML = '';

@@ -1,3 +1,12 @@
+export function validateImageFile(file, maxSize) {
+    if (!file || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+        return 'Choose a JPEG, PNG, WebP, or GIF image.';
+    }
+    if (file.size === 0) return 'The image is empty.';
+    if (file.size > maxSize) return `Image must be under ${Math.round(maxSize / 1024 / 1024)} MB.`;
+    return null;
+}
+
 let handleImage = null;
 
 export function setHandler(handler) {
@@ -6,38 +15,22 @@ export function setHandler(handler) {
 
 function processFile(file) {
     if (!file) return;
-
-    if (file.type.startsWith('image/')) {
-        if (handleImage) {
-            handleImage(file);
-        } else {
-            alert('No image handler is configured.');
-        }
-        return;
-    }
-
-    alert('Please choose a valid image.');
+    handleImage?.(file);
 }
 
 function setupFileInput(buttonElement, fileInputElement) {
     if (!buttonElement || !fileInputElement) return;
 
-    const newButton = buttonElement.cloneNode(true);
-    buttonElement.parentNode.replaceChild(newButton, buttonElement);
-    
-    const newFileInput = fileInputElement.cloneNode(true);
-    fileInputElement.parentNode.replaceChild(newFileInput, fileInputElement);
-
-    newButton.addEventListener('click', () => {
-        if (!newButton.disabled) {
-            newFileInput.click();
+    buttonElement.addEventListener('click', () => {
+        if (!buttonElement.disabled) {
+            fileInputElement.click();
         }
     });
 
-    newFileInput.addEventListener('change', (e) => {
+    fileInputElement.addEventListener('change', (e) => {
         if (e.target.files.length) {
             processFile(e.target.files[0]);
-            newFileInput.value = '';
+            fileInputElement.value = '';
         }
     });
 }
@@ -65,7 +58,7 @@ export function createUploadButton(extraClass = '') {
     
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = 'image/*';
+    fileInput.accept = 'image/jpeg,image/png,image/webp,image/gif';
     fileInput.hidden = true;
     fileInput.setAttribute('data-pokemon-upload-input', '');
     
@@ -83,7 +76,7 @@ export function showScanner() {
 
     const uploadContainer = createUploadButton();
     
-    carousel.innerHTML = '';
+    carousel.replaceChildren();
     
     const scannerDiv = document.createElement('div');
     scannerDiv.className = 'pokedex-scanner scanner-screen';
@@ -93,7 +86,7 @@ export function showScanner() {
     
     const hint = document.createElement('p');
     hint.className = 'scanner-hint';
-    hint.innerHTML = 'Tap to identify<br>your Pokemon';
+    hint.textContent = 'Tap to identify your Pokémon';
     
     centerDiv.appendChild(uploadContainer);
     centerDiv.appendChild(hint);

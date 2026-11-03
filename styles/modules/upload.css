@@ -104,6 +104,21 @@
     background: rgba(0, 0, 0, 0.18);
 }
 
+.status-message {
+    position: absolute;
+    z-index: 4;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background: #163e47;
+    color: white;
+    text-align: center;
+    font-size: 0.75rem;
+}
+.status-message.is-error { background: #7e1414; }
+
 .scanner-bottom-upload-btn {
     width: 64px;
     height: 64px;

@@ -1,24 +1,23 @@
-let isDragging = false;
-let startY = 0;
-let startScrollTop = 0;
-
 export function initDragScroll(carouselElement) {
     if (!carouselElement || carouselElement.dataset.dragInitialized === 'true') return;
+    let isDragging = false;
+    let startY = 0;
+    let startScrollTop = 0;
 
     function onMouseDown(e) {
-        e.preventDefault();
+        if (e.button !== 0 || e.target.closest('button, input, a, select, textarea')) return;
         isDragging = true;
         startY = e.clientY;
         startScrollTop = carouselElement.scrollTop;
         carouselElement.style.cursor = 'grabbing';
         carouselElement.style.scrollBehavior = 'auto';
-        window.getSelection()?.removeAllRanges();
     }
 
     function onMouseMove(e) {
         if (!isDragging) return;
-        e.preventDefault();
         const deltaY = e.clientY - startY;
+        if (Math.abs(deltaY) < 4) return;
+        e.preventDefault();
         carouselElement.scrollTop = startScrollTop - deltaY;
     }
 
@@ -41,7 +40,6 @@ export function initDragScroll(carouselElement) {
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
     carouselElement.addEventListener('mouseleave', onMouseLeave);
-    carouselElement.addEventListener('dragstart', (e) => e.preventDefault());
     carouselElement.style.cursor = 'grab';
     carouselElement.dataset.dragInitialized = 'true';
 }

@@ -9,7 +9,8 @@ const BG_COLOR = "#ffffff";
 export function renderResult(fullData) {
     const pokemonData = fullData.pokemon;
     const speciesData = fullData.species || null;   
-    const name = pokemonData.name.charAt(0).toUpperCase() + pokemonData.name.slice(1);
+    const rawName = pokemonData.name || fullData.prediction || 'Unknown';
+    const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
     const id = pokemonData.id;
 
     const slides = [

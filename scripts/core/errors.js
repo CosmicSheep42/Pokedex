@@ -16,7 +16,7 @@ export class HttpError extends AppError {
 }
 
 export function TimeoutError() {
-    return new AppError("Request timed out. Please try again.", "TIMEOUT");
+    return new AppError("The service took too long to respond. It may be starting up; please try again shortly.", "TIMEOUT");
 }
 
 export function NetworkError() {
@@ -34,15 +34,20 @@ export function ClassificationError(details = "") {
     return new AppError(message, "CLASSIFICATION_ERROR");
 }
 
+export function InvalidResponseError() {
+    return new AppError("The service returned an invalid response.", "INVALID_RESPONSE");
+}
+
 export function getErrorMessage(error) {
     if (typeof error === "string") return error;
     
     const messages = {
-        "TIMEOUT": "Request timed out. Please try again.",
+        "TIMEOUT": "The service took too long. It may be starting up; please try again shortly.",
         "NETWORK": "Connection error. Check your internet.",
         "NO_POKEMON": "Couldn't identify a Pokémon in this image.",
         "CLASSIFICATION_ERROR": "Failed to identify. Try another image.",
         "HTTP_ERROR": "Service error. Please try again later.",
+        "INVALID_RESPONSE": "The service returned an invalid response. Please try again later.",
         "APP_ERROR": "Something went wrong. Try again."
     };
     

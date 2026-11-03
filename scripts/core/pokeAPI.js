@@ -13,7 +13,8 @@ export class APIService {
     }
 
     async getSpecies(pokemonId) {
-        return this.httpClient.request(`${this.baseUrl}/pokemon-species/${pokemonId}`, {
+        const safeIdentifier = encodeURIComponent(String(pokemonId).toLowerCase());
+        return this.httpClient.request(`${this.baseUrl}/pokemon-species/${safeIdentifier}`, {
             timeoutMs: this.timeoutMs
         });
     }
