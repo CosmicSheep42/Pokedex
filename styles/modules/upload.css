@@ -176,7 +176,7 @@
 }
 
 @media (min-width: 801px) {
-    .pokeball-btn {
+    .pokeball-btn:not(.scanner-bottom-upload-btn) {
         width: clamp(120px, 18dvh, 170px);
         height: clamp(120px, 18dvh, 170px);
         border-width: clamp(8px, 1dvh, 10px);
