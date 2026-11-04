@@ -139,6 +139,26 @@
     border-width: 5px;
 }
 
+@media (min-width: 801px) {
+    .pokeball-btn {
+        width: clamp(120px, 18dvh, 170px);
+        height: clamp(120px, 18dvh, 170px);
+        border-width: clamp(8px, 1dvh, 10px);
+    }
+
+    .pokeball-button {
+        width: 42%;
+        height: 42%;
+        border-width: clamp(8px, 1dvh, 10px);
+    }
+
+    .pokeball-inner::before,
+    .pokeball-inner::after {
+        height: clamp(8px, 1dvh, 10px);
+        width: calc(50% - 22px);
+    }
+}
+
 @media (max-width: 380px) {
     .pokeball-btn {
         width: 86px;
