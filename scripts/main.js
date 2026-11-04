@@ -48,13 +48,12 @@ async function handleImageSelected(file) {
     }
     
     setLoadingState(true);
-    showStatus('Identifying your Pokémon…');
+    showStatus('');
     
     try {
         const result = await FetchData.execute(file);
         renderResult(result);
         setBottomToUploadMode();
-        showStatus('');
     } catch (error) {
         console.error("Error identifying Pokémon:", error);
         showScanner();
