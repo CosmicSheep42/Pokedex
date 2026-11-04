@@ -141,3 +141,33 @@ test('renderers tolerate missing optional data and escape external text', () => 
     assert.ok(renderStats({ stats: [] }).includes('No stats available'));
     assert.ok(renderSprites({ sprites: { front_default: 'javascript:alert(1)' } }).includes('No sprites available'));
 });
+
+test('sprite gallery groups collections, hides empty groups and rejects unsafe URLs', () => {
+    const url = 'https://example.com/front.png';
+    const html = renderSprites({ sprites: {
+        front_default: url, front_shiny: url, back_default: null,
+        other: { 'official-artwork': { front_default: 'https://example.com/art.png' }, empty: {} },
+        versions: { 'generation-i': { red: { front_default: 'https://example.com/red.png' } },
+            'generation-ii': { front_default: 'javascript:alert(1)' } }
+    } });
+    assert.equal((html.match(/<details /g) || []).length, 3);
+    assert.equal((html.match(/src="https:\/\/example.com\/front.png"/g) || []).length, 1);
+    assert.match(html, /official artwork/);
+    assert.match(html, /generation i/);
+    assert.doesNotMatch(html, /javascript:|<details[^>]*\bopen\b|>empty</);
+    assert.match(renderSprites({}), /No sprites available/);
+});
+
+test('additional details show available API fields and escape external values', async () => {
+    const { renderDetails } = await import('../scripts/modules/details.js');
+    const html = renderDetails({ abilities: [{ ability: { name: 'lightning-rod' }, is_hidden: true }] }, {
+        generation: { name: 'generation-i' }, habitat: { name: '<forest>' },
+        egg_groups: [{ name: 'field' }], growth_rate: { name: 'medium-fast' }
+    });
+    assert.match(html, /lightning rod \(hidden\)/);
+    assert.match(html, /<dd>I<\/dd>/);
+    assert.match(html, /&lt;forest&gt;/);
+    assert.match(html, /field/);
+    assert.match(html, /medium fast/);
+    assert.equal(renderDetails({}, null), '');
+});

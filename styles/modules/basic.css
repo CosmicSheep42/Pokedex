@@ -3,6 +3,22 @@
     margin-top: 2rem;
 }
 
+.pokemon-details { margin: 0; }
+.pokemon-details > div {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #d8dce0;
+    font-size: 0.85rem;
+}
+.pokemon-details dt { font-weight: 600; }
+.pokemon-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    text-transform: capitalize;
+}
+
 .pokemon-name {
     font-size: 2rem;
     font-weight: 800;

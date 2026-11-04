@@ -5,7 +5,7 @@ export function initDragScroll(carouselElement) {
     let startScrollTop = 0;
 
     function onMouseDown(e) {
-        if (e.button !== 0 || e.target.closest('button, input, a, select, textarea')) return;
+        if (e.button !== 0 || e.target.closest('button, input, a, select, textarea, summary')) return;
         isDragging = true;
         startY = e.clientY;
         startScrollTop = carouselElement.scrollTop;

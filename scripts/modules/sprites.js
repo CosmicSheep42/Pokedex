@@ -1,27 +1,33 @@
 import { escapeHtml, safeImageUrl } from "../UI/safeHtml.js";
 
+const readable = value => value.replace(/[-_]/g, ' ');
+
 export function renderSprites(data) {
-    let spritesHtml = '<div class="divider" style="margin-top: -1rem;"></div><div class="section-title" style="margin-top: 1rem;">Sprite Gallery</div><div class="sprite-grid">';
-    const seen = new Set();
-    function extractSprites(obj, path = '') {
-        if (!obj) return;
-        for (const [key, value] of Object.entries(obj)) {
-            const url = safeImageUrl(value);
-            if (url && !seen.has(url)) {
-                seen.add(url);
-                const label = escapeHtml(path + key);
-                spritesHtml += `
-                    <div class="sprite-item">
-                        <img src="${url}" alt="${label}" loading="lazy">
-                        <div class="sprite-label">${label}</div>
-                    </div>
-                `;
-            } else if (typeof value === 'object' && value !== null) {
-                extractSprites(value, path + key + ' / ');
+    const sprites = data.sprites || {};
+    const groups = [
+        ['Main sprites', Object.fromEntries(Object.entries(sprites).filter(([key]) => key !== 'other' && key !== 'versions'))],
+        ...Object.entries(sprites.other || {}),
+        ...Object.entries(sprites.versions || {})
+    ];
+    const panels = groups.map(([title, source]) => {
+        const seen = new Set();
+        const items = [];
+        function collect(obj, path = '') {
+            if (!obj || typeof obj !== 'object') return;
+            for (const [key, value] of Object.entries(obj)) {
+                const url = safeImageUrl(value);
+                if (url && !seen.has(url)) {
+                    seen.add(url);
+                    const label = escapeHtml(readable(path + key));
+                    items.push(`<figure class="sprite-item"><img src="${url}" alt="${label}" loading="lazy"><figcaption class="sprite-label">${label}</figcaption></figure>`);
+                } else if (value && typeof value === 'object') {
+                    collect(value, path + key + ' / ');
+                }
             }
         }
-    }
-    extractSprites(data.sprites);
-    spritesHtml += seen.size ? '</div>' : '<p>No sprites available.</p></div>';
-    return spritesHtml;
+        collect(source);
+        if (!items.length) return '';
+        return `<details class="sprite-group"><summary>${escapeHtml(readable(title))} <span class="sprite-count">(${items.length})</span></summary><div class="sprite-grid">${items.join('')}</div></details>`;
+    }).join('');
+    return `<div class="divider"></div><h2 class="section-title">Sprite Gallery</h2>${panels ? '<p class="gallery-hint">Choose a collection to view its sprites.</p>' + panels : '<p>No sprites available.</p>'}`;
 }
