@@ -1,0 +1,11 @@
+{
+  "source": "https://github.com/eternal-f1ame/WTP-Bench",
+  "revision": "5e96847cbabb1da6e28d85bae672f8f4e247322e",
+  "description": "WTP-Bench curated official artwork/silhouette, Gen 1-8. Not an independent held-out test set.",
+  "mode": "hq",
+  "selection_seed": 42,
+  "per_generation": null,
+  "include_forms": false,
+  "total_samples": 905,
+  "image_license_notice": "Artwork is owned by The Pokemon Company/Nintendo/Game Freak. Do not redistribute image files. See docs/DATASET_AND_RIGHTS.md."
+}

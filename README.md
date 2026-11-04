@@ -2,6 +2,13 @@
 
 A small web app that identifies a Pokémon from an uploaded image. A FastAPI service runs a pre-existing image classification model; the static frontend then fetches species data from PokéAPI and presents it in a vertical Pokédex carousel.
 
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES_Modules-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/docs/Web/JavaScript)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-Inference-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Hugging Face](https://img.shields.io/badge/Hugging_Face-Transformers-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/)
+[![GitHub Pages](https://img.shields.io/badge/Hosting-GitHub_Pages-222222?logo=githubpages&logoColor=white)](https://pages.github.com/)
+
 ## Demo
 
 [Open the GitHub Pages frontend](https://cosmicsheep42.github.io/Pokedex/). Classification depends on a separate Hugging Face Space that may need time to wake after inactivity.
@@ -75,7 +82,69 @@ Change `BACKEND_URL` in the root `config.js` to `http://127.0.0.1:8000/classify`
 
 The backend integrates the existing model published by `skshmjn`; this project does not claim to have trained or fine-tuned it. The model card describes it as a ViT classifier for up to 1,025 Pokémon species. The service opens the uploaded image with Pillow, checks its dimensions, converts it to RGB, applies `ViTImageProcessor.from_pretrained`, and runs `ViTForImageClassification` in inference mode. It maps the highest logit to a label and returns `pokemonName` plus up to five candidates with `modelScore` values derived from softmax. These scores are **not calibrated probabilities**. The frontend currently uses only `pokemonName`.
 
-The model may misclassify unusual artwork, partial subjects, multiple Pokémon, or images outside its training distribution. No separate labeled evaluation set, top-1/top-5 benchmark, calibration study, or error analysis is included, so no accuracy claim is made here. A reproducible evaluation would require a held-out labeled image set with documented source and label mapping.
+The model may misclassify unusual artwork, partial subjects, multiple Pokémon, or images outside its training distribution. The deployed API was evaluated against WTP-Bench; measured results and the reproduction steps are below. This is a reference benchmark, not a verified held-out test set.
+
+### WTP-Bench evaluation (2026-11-04)
+
+The run used all **905 base species** from Generations 1–8 in the pinned [WTP-Bench revision](https://github.com/eternal-f1ame/WTP-Bench/tree/5e96847cbabb1da6e28d85bae672f8f4e247322e), with one official high quality artwork image per species. The benchmark sent the images to the deployed `/classify` API and scored species IDs, so generic model labels for default forms count as the same species.
+
+WTP-Bench contains official artwork and silhouette variants. This run selected only high quality artwork for base species; it did not score alternate forms. The preparation command records each source, label, and image SHA-256 in a manifest. Inference records the API response, prediction, status, retries, and client-side latency for each image. The warm-up request is recorded separately and excluded from the per-image latency metrics.
+
+| Metric | Measured result |
+|---|---:|
+| Top-1 | **97.7%** (884/905 successful responses) |
+| API failures | **0/905** (0%) |
+| Top-5 | **N/A**; the deployed API did not return five usable candidates |
+| Client latency p50 / p95 | **1,750 ms / 3,429 ms** |
+
+| Generation | Top-1 | Correct / total |
+|---|---:|---:|
+| 1 | 98.0% | 148/151 |
+| 2 | 95.0% | 95/100 |
+| 3 | 97.0% | 131/135 |
+| 4 | 96.3% | 103/107 |
+| 5 | 98.1% | 153/156 |
+| 6 | 100.0% | 72/72 |
+| 7 | 100.0% | 88/88 |
+| 8 | 97.9% | 94/96 |
+
+The 21 remaining mistakes were mostly confusions between nearby evolution stages, including Arcanine→Growlithe, Cubone→Marowak, and Porygon-Z→Porygon. The reported Top-1 uses the benchmark's species-level label mapping. The 95% Wilson interval is 96.5%–98.5% under a simplified binomial assumption.
+
+Top-1 is correct species predictions divided by successful responses. Failures are reported separately and count as misses in end-to-end accuracy. Top-5 is calculated only when the API returns five valid candidates. Latency is measured on the client and includes network and retries; p50/p95 use successful image requests. The Wilson interval is a binomial approximation and does not account for possible dependence between images or overlap with training data.
+
+![Measured Top-1 accuracy by generation](evaluation/results/accuracy_by_generation.svg)
+
+Results: [full report](evaluation/results/report.md), [all predictions](evaluation/results/predictions.csv), [metrics JSON](evaluation/results/metrics.json), [per-generation CSV](evaluation/results/per_generation.csv), and [error list](evaluation/results/failures_and_misclassifications.csv). No Pokémon images are committed; `prepare` downloads them locally when reproducing the run.
+
+See the detailed [evaluation methodology](evaluation/docs/METHODOLOGY.md) and [dataset provenance and rights](evaluation/docs/DATASET_AND_RIGHTS.md). The automated benchmark tests use a local simulated API to test the tool's behavior; they do not measure model quality.
+
+#### Limitations
+
+WTP-Bench contains curated official artwork that may overlap the model's training data; the training set is unavailable, so independence cannot be claimed. Each species has one image, so this run does not establish accuracy on photographs, user uploads, other art, or different poses. It covers generations 1–8 only, not all 1,025 model classes. The deployed API response supported Top-1, but did not provide five usable candidates for Top-5 scoring. The service did not expose its exact model revision, so the result identifies the endpoint and run time, not a verified model artifact. Softmax scores are not calibrated probabilities. Latency includes network and retry time, not just model inference.
+
+#### Reproduce
+
+Requires Python 3.10+ and network access. From the repository root:
+
+```bash
+cd evaluation
+python3 -m unittest discover -s tests -v
+python3 -m benchmark prepare --all-base --image-mode hq
+python3 -m benchmark run --backend api \
+  --url https://cosmicsheep42-backend.hf.space/classify
+python3 -m benchmark report
+```
+
+The first command uses a local stub only to test the benchmark; it produces no model metrics. The other commands download the pinned dataset to `evaluation/dataset/images/` and classify all 905 images against the live service. Do not commit or redistribute that image directory. See the [benchmark methodology](evaluation/docs/METHODOLOGY.md) and [dataset rights](evaluation/docs/DATASET_AND_RIGHTS.md).
+
+To run inference with the published model locally instead of the hosted API, install `evaluation/requirements-local.txt`, then replace the API run command with:
+
+```bash
+python3 -m benchmark run --backend local \
+  --model skshmjn/Pokemon-classifier-gen9-1025
+```
+
+Local inference downloads the model weights and may require substantial memory and disk space. Record the backend used when comparing runs.
 
 ## Testing
 

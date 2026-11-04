@@ -1,0 +1,15 @@
+{
+  "backend": "api",
+  "model": "remote-service-defined",
+  "url": "https://cosmicsheep42-backend.hf.space/classify",
+  "source_manifest": "dataset/manifest.csv",
+  "attempted": 905,
+  "warmup": {
+    "status": "ok",
+    "latency_ms": 3205.25,
+    "attempts": 1
+  },
+  "timestamp_utc": "2026-11-04T05:55:37.677518+00:00",
+  "latency_definition": "End-to-end client request latency including network/retries for API; forward pass and preprocessing for local mode.",
+  "unverified_training_overlap": true
+}
