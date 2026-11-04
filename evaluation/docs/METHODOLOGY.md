@@ -20,8 +20,8 @@ The classifier is a third-party, pre-trained ViT model; this project does not tr
 Example full run and report:
 
 ```sh
-python -m benchmark run --output-dir results/run-2026-11-04-a
-python -m benchmark report --output-dir results/run-2026-11-04-a
+python3 -m benchmark run --output-dir results/run-2026-11-04-a
+python3 -m benchmark report --output-dir results/run-2026-11-04-a
 ```
 
 For an intentional partial run, add `--max-samples 20` and use its own output directory. Metadata records `scope=partial` and the limit; the report covers only the planned IDs in that execution. To rerun, choose a new output directory. Existing result directories are never reused by inference.

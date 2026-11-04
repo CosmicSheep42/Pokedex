@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import statistics
 from pathlib import Path
 from .common import (PREDICTION_FIELDS, percent, percentile, read_csv,
@@ -87,6 +88,8 @@ def validate_run(dataset_dir: Path, out: Path) -> tuple[list[dict[str, str]], di
             raise SystemExit(f'Invalid benchmark run: required file missing: {path}')
     manifest_hash = sha256(manifest_path.read_bytes())
     meta = json.loads(metadata_path.read_text(encoding='utf-8'))
+    if meta.get('model_identity', {}).get('status') == 'inconsistent':
+        raise SystemExit('Invalid benchmark run: model identity changed during inference')
     if meta.get('status') != 'completed':
         raise SystemExit(f'Invalid benchmark run: status is {meta.get("status", "missing")!r}, expected completed')
     if not meta.get('run_id') or not meta.get('timestamp_started_utc'):
@@ -166,6 +169,16 @@ def make_report(args) -> dict:
     out = Path(args.output_dir).expanduser().resolve()
     dataset_dir = Path(args.dataset_dir).expanduser().resolve()
     rows, meta, info = validate_run(dataset_dir, out)
+    report_path = out / 'report.md'
+
+    def relative_target(target: Path) -> str:
+        return Path(os.path.relpath(target, report_path.parent)).as_posix()
+
+    def local_link(label: str, target: Path) -> str:
+        return f'[{label}]({relative_target(target)})'
+
+    project_root = Path(__file__).resolve().parents[2]
+
     all_metrics = calculate_group(rows)
     by_gen = {}
     for gen in sorted(set(r.get('generation') or 'unknown' for r in rows), key=str):
@@ -237,7 +250,7 @@ def make_report(args) -> dict:
                       '| Condition | Top-1 | Correct / successful | Failed |', '|---|---:|---:|---:|'])
         for variation, vm in sorted(by_variation.items()):
             lines.append(f'| {variation} | {fmt(vm["top1_accuracy_percent"])} | {vm["top1_correct"]}/{vm["successful"]} | {vm["failed"]} |')
-    lines.extend(['', '![Top-1 accuracy by generation](evaluation/results/accuracy_by_generation.svg)', '',
+    lines.extend(['', f'![Top-1 accuracy by generation]({relative_target(out / "accuracy_by_generation.svg")})', '',
                   '### Scope and limitations', '',
                   'This is a **reference benchmark** of a third-party pre-trained ViT model, not a verified held-out test. '
                   'Official artwork might overlap the training images; the WTP-Bench dataset is not proven independent of training. '
@@ -247,23 +260,25 @@ def make_report(args) -> dict:
                   'Top-5 is reported only where the API supplies five candidates; model scores are not necessarily calibrated probabilities. '
                   'The generation chart is descriptive and uses the same single-image-per-species sample; it is not evidence of '
                   'generalization within each generation.', '',
-                  'Reproducibility: [dataset source](https://github.com/eternal-f1ame/WTP-Bench), '
-                  '[evaluation code](evaluation/benchmark/), '
-                  '[predictions](evaluation/results/predictions.csv), '
-                  '[metrics](evaluation/results/metrics.json).', ''])
+                  f'Reproducibility: {local_link("dataset manifest", dataset_dir / "manifest.csv")}, '
+                  f'{local_link("dataset metadata", dataset_dir / "dataset_info.json")}, '
+                  '[WTP-Bench source](https://github.com/eternal-f1ame/WTP-Bench), '
+                  f'{local_link("evaluation code", project_root / "evaluation/benchmark")}, '
+                  f'{local_link("predictions", out / "predictions.csv")}, '
+                  f'{local_link("metrics", out / "metrics.json")}.', ''])
     report_lines = ['# Pokédex benchmark report', '',
                     f'Run ID: `{meta.get("run_id", "unknown")}`; scope: **{meta.get("scope", "unknown")}**; '
                     f'started: {meta.get("timestamp_started_utc", "time unknown")}', '',
-                    *[line.replace('(evaluation/results/', '(').replace('(evaluation/benchmark/', '(../benchmark/')
-                      for line in lines[1:]],
+                    *lines[1:],
                     '## Errors and misclassifications', '',
                     'The complete per-sample list, including expected species, prediction, generation, and sample ID, '
-                    'is in [failures_and_misclassifications.csv](failures_and_misclassifications.csv).', '',
+                    f'is in {local_link("failures_and_misclassifications.csv", out / "failures_and_misclassifications.csv")}.', '',
                     '## Notes', '',
                          'The numeric score returned by softmax is not a calibrated probability of being correct.',
                          'Request failures are distinguished from classifier errors and excluded from model-only Top-1 accuracy.',
+                         f'Model identity consistency: `{meta.get("model_identity", {}).get("status", "not recorded for this run")}`.',
                          'This report was generated from predictions.csv; no manual scores were supplied.']
-    write_text(out / 'report.md', '\n'.join(report_lines))
+    write_text(report_path, '\n'.join(report_lines))
     print(f'Created: {out / "metrics.json"}, {out / "report.md"}, per-generation/per-variation CSV, errors CSV, and SVG')
     print(f'Top-1 successful requests: {fmt(all_metrics["top1_accuracy_percent"])}; '
           f'end-to-end: {fmt(all_metrics["end_to_end_correct_percent"])}')

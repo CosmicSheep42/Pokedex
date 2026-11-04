@@ -59,6 +59,45 @@ def parse_prediction(payload: object) -> tuple[str, list[dict], float | None, bo
     return top1, candidates, model_score, isinstance(candidates_raw, list) and len(candidates) >= 5
 
 
+def observe_model_identity(metadata: dict, payload: object) -> None:
+    """Track API-reported identity without treating missing metadata as verification."""
+    identity = metadata.setdefault('model_identity', {
+        'status': 'unverified', 'responses': 0, 'responses_with_model_metadata': 0,
+        'responses_with_revision': 0, 'responses_missing_revision': 0,
+        'model_ids': [], 'revisions': [],
+    })
+    identity['responses'] += 1
+    model = payload.get('model') if isinstance(payload, dict) else None
+    if not isinstance(model, dict):
+        identity['responses_missing_revision'] += 1
+    else:
+        model_id = model.get('id')
+        revision = model.get('revision')
+        if isinstance(model_id, str) and model_id.strip():
+            identity['responses_with_model_metadata'] += 1
+            if model_id not in identity['model_ids']:
+                identity['model_ids'].append(model_id)
+        if isinstance(revision, str) and revision.strip():
+            identity['responses_with_revision'] += 1
+            if revision not in identity['revisions']:
+                identity['revisions'].append(revision)
+            metadata['model_revision'] = metadata.get('model_revision') or revision
+        else:
+            identity['responses_missing_revision'] += 1
+        if isinstance(model_id, str) and model_id.strip():
+            metadata['backend_model'] = metadata.get('backend_model') or model_id
+
+    if len(identity['revisions']) > 1 or len(identity['model_ids']) > 1:
+        identity['status'] = 'inconsistent'
+    elif not identity['responses_with_revision']:
+        identity['status'] = 'unverified'
+    elif (identity['responses_missing_revision'] or
+          identity['responses_with_model_metadata'] != identity['responses']):
+        identity['status'] = 'incomplete'
+    else:
+        identity['status'] = 'consistent'
+
+
 class APIClient:
     def __init__(self, *, url: str, timeout: float, retries: int = 1) -> None:
         if not url.startswith(('https://', 'http://127.0.0.1:', 'http://localhost:')):
@@ -203,6 +242,9 @@ def run(args) -> None:
         'backend': args.backend, 'endpoint': args.url if args.backend == 'api' else None,
         'model_id': args.model if args.backend == 'local' else None, 'model_revision': None,
         'backend_model': None, 'timeout_seconds': args.timeout, 'retries': args.retries,
+        'model_identity': {'status': 'unverified', 'responses': 0,
+                           'responses_with_model_metadata': 0, 'responses_with_revision': 0,
+                           'responses_missing_revision': 0, 'model_ids': [], 'revisions': []},
         'delay_seconds': args.delay, 'warmup_enabled': bool(args.warmup),
         'manifest_sha256': manifest_hash, 'dataset_files_sha256': dataset_files,
         'dataset': {'source': dataset_info.get('source'), 'revision': dataset_info.get('revision'),
@@ -222,6 +264,14 @@ def run(args) -> None:
                    if args.backend == 'api' else LocalModel(model_id=args.model))
         if args.backend == 'local':
             metadata['model_revision'] = service.revision
+            metadata['model_identity'] = {
+                'status': 'consistent' if service.revision else 'unverified',
+                'source': 'loaded local model config', 'responses': 0,
+                'responses_with_model_metadata': 0,
+                'responses_with_revision': int(bool(service.revision)),
+                'responses_missing_revision': 0 if service.revision else 1,
+                'model_ids': [args.model], 'revisions': [service.revision] if service.revision else [],
+            }
             write_json(metadata_path, metadata)
         if args.warmup:
             path = resolved_local_path(dataset_dir, samples[0]['image_path'])
@@ -230,10 +280,8 @@ def run(args) -> None:
                 try:
                     warmup_payload, attempts = service.classify(path)
                     warmup_result = {'status': 'ok', 'latency_ms': round((time.perf_counter()-start)*1000, 2), 'attempts': attempts}
-                    if isinstance(warmup_payload, dict) and isinstance(warmup_payload.get('model'), dict):
-                        model_info = warmup_payload['model']
-                        metadata['backend_model'] = model_info.get('id', metadata['backend_model'])
-                        metadata['model_revision'] = model_info.get('revision', metadata['model_revision'])
+                    if args.backend == 'api':
+                        observe_model_identity(metadata, warmup_payload)
                 except Exception as exc:
                     warmup_result = {'status': 'failed', 'error': str(exc)}
                 metadata['warmup'] = warmup_result
@@ -258,10 +306,8 @@ def run(args) -> None:
                 finally:
                     row['latency_ms'] = round((time.perf_counter()-start)*1000, 2)
                 row['attempts'] = attempts
-                if isinstance(payload, dict) and isinstance(payload.get('model'), dict):
-                    model_info = payload['model']
-                    metadata['backend_model'] = model_info.get('id', metadata['backend_model'])
-                    metadata['model_revision'] = model_info.get('revision', metadata['model_revision'])
+                if args.backend == 'api':
+                    observe_model_identity(metadata, payload)
                 row.update(evaluate_sample(sample, payload, aliases))
                 row['failure_stage'] = ''
             except Exception as exc:
@@ -277,13 +323,18 @@ def run(args) -> None:
             write_json(metadata_path, metadata)
             if args.delay and index < len(samples):
                 time.sleep(args.delay)
-        metadata['status'] = 'completed'
-        metadata['timestamp_completed_utc'] = __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
+        identity_inconsistent = metadata['model_identity']['status'] == 'inconsistent'
+        metadata['status'] = 'model_identity_inconsistent' if identity_inconsistent else 'completed'
+        timestamp_key = 'timestamp_model_identity_inconsistent' if identity_inconsistent else 'timestamp_completed_utc'
+        metadata[timestamp_key] = __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
         metadata['latency_definition'] = 'End-to-end client request latency including network/retries for API; forward pass and preprocessing for local mode.'
         write_json(metadata_path, metadata)
+        if identity_inconsistent:
+            raise RuntimeError('Model identity changed during this run; results cannot be reported as one consistent benchmark.')
     except BaseException:
-        metadata['status'] = 'interrupted'
-        metadata['timestamp_interrupted_utc'] = __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
-        write_json(metadata_path, metadata)
+        if metadata.get('status') != 'model_identity_inconsistent':
+            metadata['status'] = 'interrupted'
+            metadata['timestamp_interrupted_utc'] = __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
+            write_json(metadata_path, metadata)
         raise
     print(f'Results saved: {predictions_path}. Generate report with: python -m benchmark report --dataset-dir {dataset_dir} --output-dir {result_dir}')

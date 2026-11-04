@@ -30,7 +30,7 @@ Run ID: `6d117900d8514423812cdb55a978a1a0`; scope: **complete**; started: 2026-1
 
 This is a **reference benchmark** of a third-party pre-trained ViT model, not a verified held-out test. Official artwork might overlap the training images; the WTP-Bench dataset is not proven independent of training. It covers Generations 1–8 only, not all 1,025 classes. The benchmark measures species identification; alternative forms are not separately scored. Each species has one curated image, so results do not measure variation across images or real-world accuracy. Top-5 is reported only where the API supplies five candidates; model scores are not necessarily calibrated probabilities. The generation chart is descriptive and uses the same single-image-per-species sample; it is not evidence of generalization within each generation.
 
-Reproducibility: [dataset source](https://github.com/eternal-f1ame/WTP-Bench), [evaluation code](../benchmark/), [predictions](predictions.csv), [metrics](metrics.json).
+Reproducibility: [dataset manifest](../../dataset/manifest.csv), [dataset metadata](../../dataset/dataset_info.json), [WTP-Bench source](https://github.com/eternal-f1ame/WTP-Bench), [evaluation code](../../benchmark), [predictions](predictions.csv), [metrics](metrics.json).
 
 ## Errors and misclassifications
 
@@ -40,4 +40,5 @@ The complete per-sample list, including expected species, prediction, generation
 
 The numeric score returned by softmax is not a calibrated probability of being correct.
 Request failures are distinguished from classifier errors and excluded from model-only Top-1 accuracy.
+Model identity consistency: `not recorded for this run`.
 This report was generated from predictions.csv; no manual scores were supplied.

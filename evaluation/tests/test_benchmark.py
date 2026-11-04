@@ -4,9 +4,11 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -14,7 +16,8 @@ from benchmark.common import (make_label_to_id, normalize_name, resolved_local_p
                               read_csv, sha256, write_csv, write_json, MANIFEST_FIELDS,
                               PREDICTION_FIELDS)
 from benchmark.prepare import build_manifest, select_rows
-from benchmark.inference import APIClient, evaluate_sample, parse_prediction, run
+from benchmark.inference import (APIClient, evaluate_sample, observe_model_identity,
+                                 parse_prediction, run)
 from benchmark.report import calculate_group, make_report, validate_run
 
 
@@ -123,9 +126,76 @@ class TestScoring(unittest.TestCase):
         self.assertEqual(m['end_to_end_correct_percent'], 0)
         self.assertIsNone(m['top5_percent'])
 
+
+class TestModelIdentity(unittest.TestCase):
+    def test_consistent_model_revision(self):
+        metadata = {}
+        for _ in range(2):
+            observe_model_identity(metadata, {'pokemonName': 'Pikachu',
+                                               'model': {'id': 'classifier', 'revision': 'rev-a'}})
+        self.assertEqual(metadata['model_identity']['status'], 'consistent')
+        self.assertEqual(metadata['model_identity']['revisions'], ['rev-a'])
+
+    def test_revision_change_is_inconsistent(self):
+        metadata = {}
+        observe_model_identity(metadata, {'model': {'id': 'classifier', 'revision': 'rev-a'}})
+        observe_model_identity(metadata, {'model': {'id': 'classifier', 'revision': 'rev-b'}})
+        self.assertEqual(metadata['model_identity']['status'], 'inconsistent')
+        self.assertEqual(metadata['model_identity']['revisions'], ['rev-a', 'rev-b'])
+
+    def test_missing_revision_is_unverified_or_incomplete(self):
+        unverified = {}
+        observe_model_identity(unverified, {'pokemonName': 'Pikachu'})
+        self.assertEqual(unverified['model_identity']['status'], 'unverified')
+        partial = {}
+        observe_model_identity(partial, {'model': {'id': 'classifier', 'revision': 'rev-a'}})
+        observe_model_identity(partial, {'model': {'id': 'classifier'}})
+        self.assertEqual(partial['model_identity']['status'], 'incomplete')
+
+    def test_incomplete_model_metadata_is_not_verified(self):
+        metadata = {}
+        observe_model_identity(metadata, {'model': {'revision': 'rev-a'}})
+        self.assertEqual(metadata['model_identity']['status'], 'incomplete')
+
+    def test_run_cannot_complete_after_revision_changes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            ds, out = root / 'dataset', root / 'run'
+            (ds / 'images').mkdir(parents=True)
+            image_bytes = b'fixture image bytes'
+            (ds / 'images/sample.png').write_bytes(image_bytes)
+            sample = {'sample_id': 'sample-1', 'image_path': 'images/sample.png',
+                      'expected_name': 'pikachu', 'expected_id': '25', 'generation': '1',
+                      'variation': 'fixture', 'form': '', 'source_url': 'fixture:',
+                      'sha256': sha256(image_bytes)}
+            write_csv(ds / 'manifest.csv', [sample], MANIFEST_FIELDS)
+            write_json(ds / 'dataset_info.json', {'source': 'fixture', 'revision': 'fixture',
+                       'mode': 'fixture', 'selection_seed': 1, 'include_forms': False,
+                       'total_samples': 1})
+
+            class ChangingModelAPI:
+                def __init__(self, **_kwargs):
+                    self.revisions = iter(('rev-a', 'rev-b'))
+
+                def classify(self, _image):
+                    revision = next(self.revisions)
+                    return {'pokemonName': 'Pikachu',
+                            'model': {'id': 'fixture-model', 'revision': revision}}, 1
+
+            args = argparse.Namespace(dataset_dir=str(ds), output_dir=str(out), backend='api',
+                                      model='N/A', timeout=2, retries=0, delay=0,
+                                      max_samples=None, warmup=True,
+                                      url='https://fixture.invalid/classify')
+            with patch('benchmark.inference.APIClient', ChangingModelAPI):
+                with self.assertRaisesRegex(RuntimeError, 'identity changed'):
+                    run(args)
+            metadata = json.loads((out / 'run_metadata.json').read_text())
+            self.assertEqual(metadata['status'], 'model_identity_inconsistent')
+            self.assertEqual(metadata['model_identity']['revisions'], ['rev-a', 'rev-b'])
+
 class TestRunIntegrity(unittest.TestCase):
-    def make_run(self, root: Path, *, scope='complete', status='completed', states=None):
-        ds, out = root / 'dataset', root / 'run'
+    def make_run(self, root: Path, *, scope='complete', status='completed', states=None, output_name='run'):
+        ds, out = root / 'dataset', root / output_name
         (ds / 'images').mkdir(parents=True)
         samples = []
         predictions = []
@@ -171,6 +241,14 @@ class TestRunIntegrity(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             ds, out, meta = self.make_run(Path(temp), status='interrupted')
             with self.assertRaisesRegex(SystemExit, 'status is'):
+                validate_run(ds, out)
+
+    def test_report_rejects_changed_model_identity(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ds, out, meta = self.make_run(Path(temp))
+            meta['model_identity'] = {'status': 'inconsistent', 'revisions': ['rev-a', 'rev-b']}
+            write_json(out / 'run_metadata.json', meta)
+            with self.assertRaisesRegex(SystemExit, 'model identity changed'):
                 validate_run(ds, out)
 
     def test_rejects_changed_manifest_and_dataset(self):
@@ -240,6 +318,18 @@ class TestRunIntegrity(unittest.TestCase):
             self.assertFalse((out / 'README_SNIPPET.md').exists())
             self.assertTrue((out / 'failures_and_misclassifications.csv').exists())
             self.assertEqual((out / 'predictions.csv').read_bytes(), raw_before)
+
+    def test_report_links_resolve_at_results_root_and_nested_depth(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for output_name in ('results', 'results/definitive-2026-11-04'):
+                ds, out, _ = self.make_run(root / output_name.replace('/', '_'), output_name=output_name)
+                make_report(argparse.Namespace(dataset_dir=str(ds), output_dir=str(out)))
+                report = (out / 'report.md').read_text(encoding='utf-8')
+                targets = re.findall(r'\]\(([^)]+)\)', report)
+                local_targets = [target for target in targets if not target.startswith(('http://', 'https://'))]
+                for target in local_targets:
+                    self.assertTrue((out / target).resolve().exists(), target)
 
     def test_request_failures_are_not_confusion_errors(self):
         with tempfile.TemporaryDirectory() as temp:
