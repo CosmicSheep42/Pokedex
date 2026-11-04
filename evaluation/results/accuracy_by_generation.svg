@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="719" height="360" viewBox="0 0 719 360" role="img" aria-label="Top-1 accuracy per generation">
 <rect width="100%" height="100%" fill="#fff"/>
 <text x="32" y="35" font-size="20" font-family="Arial" fill="#222" font-weight="bold">Top-1 accuracy by generation</text>
-<text x="32" y="56" font-size="12" font-family="Arial" fill="#555">Correct predictions / successfully processed images (not all 1,025 classes)</text>
+<text x="32" y="56" font-size="12" font-family="Arial" fill="#555">One curated image per species; descriptive, not a generalization estimate</text>
 <line x1="65" x2="694" y1="280.0" y2="280.0" stroke="#ddd"/>
 <text x="25" y="285.0" font-size="12" font-family="Arial" fill="#555">0%</text>
 <line x1="65" x2="694" y1="227.5" y2="227.5" stroke="#ddd"/>

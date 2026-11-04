@@ -2,13 +2,14 @@
 
 Benchmark executed: 2026-11-04T05:55:37.677518+00:00
 
+**Legacy artifact:** this run predates the current run-integrity metadata and is rejected by the current report validator. Its raw predictions are retained; the summary below is historical and has not been revalidated by the current tooling.
+
 ## Image classification evaluation
 
 - Dataset: WTP-Bench (official artwork, Gen 1–8).
 - Samples attempted: **905**, successful: **905**, failed: **0**.
 - Top-1 accuracy (successful requests): **97.7%** (884/905).
 - End-to-end correct responses (failures counted as incorrect): **97.7%** (884/905).
-- Indicative Wilson 95% interval (Top-1, conditional): **96.5%–98.5%**; valid only under simplified binomial assumptions.
 - Top-5 accuracy: **not available** (API did not return five usable candidates).
 - End-to-end latency p50/p95: **1750 ms / 3429 ms** (successes only; includes network and retries in API mode).
 
@@ -29,34 +30,14 @@ Benchmark executed: 2026-11-04T05:55:37.677518+00:00
 
 ### Scope and limitations
 
-This is a **reference benchmark**, not a verified held-out test. Official artwork might overlap the training images of the pre-existing ViT model. WTP-Bench covers Generations 1–8 only, not all 1,025 classes. The benchmark measures species identification; alternative forms are not separately scored. Each species has one curated image, so results do not measure variation across images or real-world accuracy. Top-5 is reported only where the API supplies five candidates; model scores are not necessarily calibrated probabilities. The service did not expose its exact model revision. The Wilson interval uses a simplified binomial assumption and does not account for image-source or training overlap.
+This is a **reference benchmark** of a third-party pre-trained ViT model, not a verified held-out test. Official artwork might overlap training data; WTP-Bench is not proven independent of training. Coverage is Generations 1–8 only. Each species has one curated image, so the score does not estimate performance on images submitted by users or variation within a species. The generation chart is descriptive, not evidence of generalization within each generation. Softmax scores are not calibrated probabilities.
+
 
 Reproducibility: [dataset source](https://github.com/eternal-f1ame/WTP-Bench), [evaluation code](../benchmark/), [predictions](predictions.csv), [metrics](metrics.json).
 
-## Most frequent mistakes or request errors
+## Errors and misclassifications
 
-| Expected | Predicted | Count |
-|---|---|---:|
-| arcanine | Growlithe | 1 |
-| tentacruel | Tentacool | 1 |
-| cubone | Marowak | 1 |
-| crobat | Zubat | 1 |
-| lanturn | Chinchou | 1 |
-| teddiursa | Ursaring | 1 |
-| magcargo | Slugma | 1 |
-| hitmontop | Tyrogue | 1 |
-| poochyena | Mightyena | 1 |
-| azurill | Marill | 1 |
-| medicham | Meditite | 1 |
-| claydol | Baltoy | 1 |
-| luxio | Luxray | 1 |
-| happiny | Chansey | 1 |
-| tangrowth | Tangela | 1 |
-| porygon-z | Porygon | 1 |
-| zebstrika | Blitzle | 1 |
-| gigalith | Roggenrola | 1 |
-| krokorok | Sandile | 1 |
-| orbeetle | Dottler | 1 |
+The complete per-sample list is in [failures_and_misclassifications.csv](failures_and_misclassifications.csv).
 
 ## Notes
 

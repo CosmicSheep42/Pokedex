@@ -4,7 +4,7 @@
 
 Each `manifest.csv` row describes one image, its source, expected base species, National Pokédex ID, generation, and condition. The file must exist and, when a `sha256` value is present, match that hash. The default WTP-Bench sample deterministically selects 12 base-form images per generation (1–8), using seed 42, so species with many alternate forms do not dominate the sample.
 
-This is not a test split verified against the ViT training data. Treat it as a reference benchmark. A stronger generalization test would use manually reviewed photographs or artwork from other sources, with a defensible separation from training data.
+The classifier is a third-party, pre-trained ViT model; this project does not train or fine-tune it. This is not a test split verified against that model's training data, and the WTP-Bench images are not proven independent of training. Treat the results as a reference benchmark. A stronger generalization test would use manually reviewed photographs or artwork from other sources, with a defensible separation from training data.
 
 ## Protocol
 
@@ -14,7 +14,17 @@ This is not a test split verified against the ViT training data. Treat it as a r
 4. For every sample, inference records the predicted name, normalized ID when available, actual API candidates, optional score, status, error, retries, and latency.
 5. Predictions are compared by base species rather than form, using name normalization and aliases derived from the dataset metadata.
 6. Missing responses are never replaced with guesses. Top-5 is N/A when the server does not provide five valid candidates.
-7. `report` reads `predictions.csv` and generates metrics and report files.
+7. Every run uses an empty, dedicated `--output-dir`. The runner writes `run_metadata.json` with a unique `run_id` and `status=running` before inference, then atomically saves progress after each sample. It finishes with `status=completed`; a caught interruption records `status=interrupted`.
+8. `report` validates the run status, manifest SHA-256, dataset metadata hashes, image hashes, planned IDs, counts, and prediction-file checksum before generating metrics. It never rewrites `predictions.csv`; inconsistent, legacy, or interrupted runs are rejected.
+
+Example full run and report:
+
+```sh
+python -m benchmark run --output-dir results/run-2026-11-04-a
+python -m benchmark report --output-dir results/run-2026-11-04-a
+```
+
+For an intentional partial run, add `--max-samples 20` and use its own output directory. Metadata records `scope=partial` and the limit; the report covers only the planned IDs in that execution. To rerun, choose a new output directory. Existing result directories are never reused by inference.
 
 ## Denominators and safeguards
 
@@ -25,11 +35,12 @@ This is not a test split verified against the ViT training data. Treat it as a r
 - **End-to-end accuracy** = `top1_correct / planned`; failures count as misses and are distinguished from classifier accuracy.
 - **Failure rate** = `failed / planned`.
 - **Latency p50/p95** = interpolated percentiles over successful requests, measured client-side. API latency includes transport, network, and retries, not only model execution.
-- **95% Wilson interval** = an approximate binomial interval for Top-1 when there are enough observations. It does not account for sampling uncertainty, class variation, or correlated images; interpret it cautiously.
 
 ## Generations and robustness
 
-`per_generation.csv` shows differences across Generations 1–8, but small per-generation samples provide only preliminary evidence. `per_variation.csv` separates official art, silhouettes, and synthetic transformations. Comparisons with transformed versions are descriptive; paired evaluations should account for dependence between each source image and its variants.
+`per_generation.csv` and the SVG show descriptive differences across Generations 1–8, using the same one-image-per-species sample. They do not estimate within-generation generalization. `per_variation.csv` separates official art, silhouettes, and synthetic transformations. Comparisons with transformed versions are descriptive; paired evaluations should account for dependence between each source image and its variants.
+
+The report writes only aggregate metrics (`metrics.json`), per-generation and per-variation summaries, a complete per-sample errors CSV, the technical Markdown report, and the descriptive generation chart. Per-class accuracy is omitted because the main protocol has one image per species. A “common confusions” ranking is also omitted when mistakes are mostly single occurrences. `predictions.csv`, the manifest, dataset hashes, and run metadata remain the audit trail. Test fixtures and stub API responses exercise software behavior only; they are never classifier results.
 
 ## Scores
 

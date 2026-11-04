@@ -3,23 +3,23 @@ import { APIService } from "./pokeAPI.js";
 import { HttpClient } from "./httpClient.js";
 import { normalizePokemonName } from "./normalizePokemonName.js";
 
-export class fetchData {
-    constructor({ backendURL, pokeApiBaseUrl, timeoutMs }) {
+export class FetchData {
+    constructor({ backendURL, pokeApiBaseUrl, classifierTimeoutMs, pokeApiTimeoutMs }) {
         this.backendURL = backendURL;
         this.httpClient = new HttpClient();
         this.pokeApiService = new APIService({
             httpClient: this.httpClient,
             baseUrl: pokeApiBaseUrl,
-            timeoutMs
+            timeoutMs: pokeApiTimeoutMs
         });
-        this.timeoutMs = timeoutMs;
+        this.classifierTimeoutMs = classifierTimeoutMs;
     }
 
     async execute(imageFile) {
         let identifier = await classify(
             imageFile, 
             this.backendURL, 
-            this.timeoutMs,
+            this.classifierTimeoutMs,
             this.httpClient
         );
         

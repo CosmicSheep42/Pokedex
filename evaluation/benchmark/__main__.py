@@ -19,7 +19,8 @@ def main() -> None:
     prep.add_argument('--manifest-only', action='store_true', help='Do not download image PNGs')
     run = sub.add_parser('run', help='Execute real inference and save CSV predictions')
     run.add_argument('--dataset-dir', default=str(DATA_DIR))
-    run.add_argument('--output-dir', default=str(RESULTS_DIR))
+    run.add_argument('--output-dir', default=str(RESULTS_DIR),
+                     help='Empty, dedicated directory for this run; choose a new path for every execution')
     run.add_argument('--backend', choices=['api', 'local'], default='api')
     run.add_argument('--url', default=DEFAULT_URL, help='Pokédex POST /classify API endpoint')
     run.add_argument('--model', default=MODEL_ID, help='HF model ID for --backend local')
