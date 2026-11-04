@@ -5,7 +5,7 @@ import { HttpClient } from '../scripts/core/httpClient.js';
 import { classify } from '../scripts/core/classification.js';
 import { FetchData } from '../scripts/core/fetchData.js';
 import { CONFIG } from '../config.js';
-import { validateImageFile } from '../scripts/modules/upload.js';
+import { createUploadButton, validateImageFile } from '../scripts/modules/upload.js';
 import { renderBasic } from '../scripts/modules/basic.js';
 import { renderFlavorText } from '../scripts/modules/flavor.js';
 import { renderStats } from '../scripts/modules/stats.js';
@@ -83,6 +83,53 @@ test('upload validation rejects invalid and oversized files', () => {
     assert.match(validateImageFile({ type: 'image/png', size: 11 }, 10), /under/);
     assert.match(validateImageFile({ type: 'image/png', size: 0 }, 10), /empty/);
     assert.equal(validateImageFile({ type: 'image/png', size: 5 }, 10), null);
+});
+
+test('mobile upload offers camera and gallery while desktop opens the gallery', () => {
+    class Element {
+        constructor(tag) { this.tag = tag; this.children = []; this.listeners = {}; this.attributes = {}; this.clickCount = 0; }
+        appendChild(child) { child.parent = this; this.children.push(child); }
+        addEventListener(type, listener) { this.listeners[type] = listener; }
+        setAttribute(name, value) { this.attributes[name] = value; }
+        getAttribute(name) { return this.attributes[name] ?? null; }
+        click() {
+            this.clickCount++;
+            const event = { target: this };
+            this.listeners.click?.(event);
+            this.parent?.listeners.click?.(event);
+        }
+        showModal() { this.open = true; }
+        close() { this.open = false; }
+    }
+
+    const previousDocument = globalThis.document;
+    const previousMatchMedia = globalThis.matchMedia;
+    globalThis.document = { createElement: (tag) => new Element(tag) };
+    try {
+        globalThis.matchMedia = () => ({ matches: true });
+        const mobile = createUploadButton();
+        const [button, camera, gallery, dialog] = mobile.children;
+        assert.equal(camera.getAttribute('capture'), 'environment');
+        assert.equal(gallery.getAttribute('capture'), null);
+        button.click();
+        assert.equal(dialog.open, true);
+        dialog.children[1].click();
+        assert.equal(dialog.open, false);
+        assert.equal(camera.clickCount, 1);
+        button.click();
+        dialog.children[2].click();
+        assert.equal(gallery.clickCount, 1);
+
+        globalThis.matchMedia = () => ({ matches: false });
+        const desktop = createUploadButton();
+        desktop.children[0].click();
+        assert.equal(desktop.children[2].clickCount, 1);
+    } finally {
+        if (previousDocument === undefined) delete globalThis.document;
+        else globalThis.document = previousDocument;
+        if (previousMatchMedia === undefined) delete globalThis.matchMedia;
+        else globalThis.matchMedia = previousMatchMedia;
+    }
 });
 
 test('renderers tolerate missing optional data and escape external text', () => {

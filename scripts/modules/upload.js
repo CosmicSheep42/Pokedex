@@ -18,21 +18,34 @@ function processFile(file) {
     handleImage?.(file);
 }
 
-function setupFileInput(buttonElement, fileInputElement) {
-    if (!buttonElement || !fileInputElement) return;
+function setupFileInput(buttonElement, cameraInput, galleryInput, sourceDialog) {
+    if (!buttonElement || !cameraInput || !galleryInput || !sourceDialog) return;
 
     buttonElement.addEventListener('click', () => {
-        if (!buttonElement.disabled) {
-            fileInputElement.click();
+        if (buttonElement.disabled) return;
+        if (globalThis.matchMedia?.('(pointer: coarse)').matches && sourceDialog.showModal) {
+            sourceDialog.showModal();
+        } else {
+            galleryInput.click();
         }
     });
 
-    fileInputElement.addEventListener('change', (e) => {
+    sourceDialog.addEventListener('click', (event) => {
+        const source = event.target.getAttribute('data-upload-source');
+        if (!source) return;
+        sourceDialog.close();
+        if (source === 'camera') cameraInput.click();
+        if (source === 'gallery') galleryInput.click();
+    });
+
+    const handleChange = (e) => {
         if (e.target.files.length) {
             processFile(e.target.files[0]);
-            fileInputElement.value = '';
+            e.target.value = '';
         }
-    });
+    };
+    cameraInput.addEventListener('change', handleChange);
+    galleryInput.addEventListener('change', handleChange);
 }
 
 export function createUploadButton(extraClass = '') {
@@ -56,16 +69,39 @@ export function createUploadButton(extraClass = '') {
     inner.appendChild(innerButton);
     button.appendChild(inner);
     
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/jpeg,image/png,image/webp,image/gif';
-    fileInput.hidden = true;
-    fileInput.setAttribute('data-pokemon-upload-input', '');
+    const cameraInput = document.createElement('input');
+    cameraInput.type = 'file';
+    cameraInput.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    cameraInput.setAttribute('capture', 'environment');
+    cameraInput.hidden = true;
+    cameraInput.setAttribute('data-pokemon-upload-input', '');
+
+    const galleryInput = document.createElement('input');
+    galleryInput.type = 'file';
+    galleryInput.accept = cameraInput.accept;
+    galleryInput.hidden = true;
+    galleryInput.setAttribute('data-pokemon-upload-input', '');
+
+    const sourceDialog = document.createElement('dialog');
+    sourceDialog.className = 'upload-source-dialog';
+    sourceDialog.setAttribute('aria-label', 'Choose an image source');
+    const dialogTitle = document.createElement('h2');
+    dialogTitle.textContent = 'Choose an image source';
+    sourceDialog.appendChild(dialogTitle);
+    for (const [source, label] of [['camera', 'Take a photo'], ['gallery', 'Choose from gallery'], ['cancel', 'Cancel']]) {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.textContent = label;
+        option.setAttribute('data-upload-source', source);
+        sourceDialog.appendChild(option);
+    }
     
     container.appendChild(button);
-    container.appendChild(fileInput);
+    container.appendChild(cameraInput);
+    container.appendChild(galleryInput);
+    container.appendChild(sourceDialog);
     
-    setupFileInput(button, fileInput);
+    setupFileInput(button, cameraInput, galleryInput, sourceDialog);
     
     return container;
 }

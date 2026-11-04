@@ -91,6 +91,42 @@
     border: 8px solid #3dc3d8;
 }
 
+.upload-source-dialog {
+    width: min(18rem, calc(100vw - 2rem));
+    margin: auto;
+    padding: 1.25rem;
+    border: 0;
+    border-radius: 1rem;
+    color: #1a2a3a;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
+}
+
+.upload-source-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.upload-source-dialog h2 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.upload-source-dialog button {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.7rem;
+    border: 1px solid #d5dde3;
+    border-radius: 0.6rem;
+    background: white;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.upload-source-dialog button:hover {
+    background: #eef8fa;
+}
+
 .scanner-hint {
     color: rgba(255, 255, 255, 0.95);
     font-size: 0.72rem;
