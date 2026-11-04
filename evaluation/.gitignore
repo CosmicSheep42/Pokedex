@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.DS_Store
+# Official artwork is downloaded directly by the user and should not be re-published.
+dataset/images/
+dataset_stress/
+# User-provided image folder / additional manual test files
+my_images/
