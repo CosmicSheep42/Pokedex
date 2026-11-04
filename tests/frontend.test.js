@@ -42,17 +42,21 @@ test('classification and PokeAPI integration use the expected contracts', async 
     const requests = [];
     globalThis.fetch = async (url, options) => {
         requests.push(String(url));
-        const data = String(url).endsWith('/classify') ? { pokemonName: 'Mr. Mime' }
-            : String(url).endsWith('/pokemon/mr-mime') ? { name: 'mr-mime', species: { name: 'mr-mime' } }
-            : { genera: [], flavor_text_entries: [] };
+        const data = String(url).endsWith('/classify') ? { pokemonName: 'Deoxys' }
+            : String(url).endsWith('/pokemon-species/deoxys') ? {
+                name: 'deoxys',
+                varieties: [{ is_default: true, pokemon: { name: 'deoxys-normal' } }]
+            }
+            : String(url).endsWith('/pokemon/deoxys-normal') ? { name: 'deoxys-normal', species: { name: 'deoxys' } }
+            : {};
         if (options.method === 'POST') assert.equal(options.body.get('file').type, 'image/png');
         return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } });
     };
     try {
         const file = new Blob(['image'], { type: 'image/png' });
         const result = await new fetchData({ backendURL: 'https://example.com/classify', pokeApiBaseUrl: 'https://example.com/api', timeoutMs: 100 }).execute(file);
-        assert.equal(result.prediction, 'mr-mime');
-        assert.deepEqual(requests, ['https://example.com/classify', 'https://example.com/api/pokemon/mr-mime', 'https://example.com/api/pokemon-species/mr-mime']);
+        assert.equal(result.prediction, 'deoxys');
+        assert.deepEqual(requests, ['https://example.com/classify', 'https://example.com/api/pokemon-species/deoxys', 'https://example.com/api/pokemon/deoxys-normal']);
         globalThis.fetch = async () => new Response('{}', { headers: { 'content-type': 'application/json' } });
         await assert.rejects(classify(file, '/classify', 100, new HttpClient()), { code: 'INVALID_RESPONSE' });
     } finally {

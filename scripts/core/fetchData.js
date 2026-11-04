@@ -25,8 +25,9 @@ export class fetchData {
         
         identifier = normalizePokemonName(identifier);
         
-        const pokemon = await this.pokeApiService.getPokemon(identifier);
-        const species = await this.pokeApiService.getSpecies(pokemon.species?.name || identifier);
+        const species = await this.pokeApiService.getSpecies(identifier);
+        const defaultPokemon = species.varieties?.find(({ is_default }) => is_default)?.pokemon?.name || identifier;
+        const pokemon = await this.pokeApiService.getPokemon(defaultPokemon);
         
         return { prediction: identifier, pokemon, species };
     }
