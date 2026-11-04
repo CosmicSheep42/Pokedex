@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import mimetypes
-import os
 import time
 import urllib.error
 import urllib.request
@@ -117,6 +116,7 @@ class LocalModel:
         self.device = device
         self.processor = ViTImageProcessor.from_pretrained(model_id)
         self.model = ViTForImageClassification.from_pretrained(model_id).to(device).eval()
+        self.revision = getattr(self.model.config, '_commit_hash', None)
 
     def classify(self, file_path: Path) -> tuple[dict, int]:
         with self.Image.open(file_path) as img:
@@ -165,11 +165,17 @@ def run(args) -> None:
     manifest_path = dataset_dir / 'manifest.csv'
     if not manifest_path.exists():
         raise SystemExit(f'Missing {manifest_path}. Run prepare or import-local first.')
+    info_path = dataset_dir / 'dataset_info.json'
+    if not info_path.is_file():
+        raise SystemExit(f'Missing {info_path}. Dataset identity is required for reproducible runs.')
+    dataset_info = json.loads(info_path.read_text(encoding='utf-8'))
     samples = read_csv(manifest_path)
     if not samples:
         raise SystemExit('Manifest is empty')
     if args.max_samples is not None:
         samples = samples[:args.max_samples]
+    if not samples:
+        raise SystemExit('No samples selected')
     metadata_path = dataset_dir / 'source_metadata.csv'
     aliases = make_label_to_id(read_csv(metadata_path)) if metadata_path.exists() else {}
     for s in samples:
@@ -178,57 +184,106 @@ def run(args) -> None:
             aliases[normalize_name(s['expected_name'])] = int(expected_id)
         else:
             aliases.setdefault(normalize_name(s['expected_name']), -1)
-    service = (APIClient(url=args.url, timeout=args.timeout, retries=args.retries)
-               if args.backend == 'api' else LocalModel(model_id=args.model))
     warmup_result = None
-    if args.warmup:
-        path = resolved_local_path(dataset_dir, samples[0]['image_path'])
-        if path.is_file():
-            start = time.perf_counter()
-            try:
-                _, attempts = service.classify(path)
-                warmup_result = {'status': 'ok', 'latency_ms': round((time.perf_counter()-start)*1000, 2), 'attempts': attempts}
-            except Exception as exc:
-                warmup_result = {'status': 'failed', 'error': str(exc)}
-            print(f'Warm-up: {warmup_result}')
-    results = []
     result_dir.mkdir(parents=True, exist_ok=True)
-    for index, sample in enumerate(samples, 1):
-        row = dict(sample)
-        row.update({'status': 'failed', 'predicted_name': '', 'predicted_id': '',
-                    'top1_correct': '', 'top5_correct': '', 'top5_available': 0,
-                    'model_score': '', 'latency_ms': '', 'attempts': 0,
-                    'error': '', 'candidates_json': '[]'})
-        try:
-            image = resolved_local_path(dataset_dir, sample['image_path'])
-            if not image.is_file():
-                raise FileNotFoundError(f'Missing image: {sample["image_path"]}')
-            expected_hash = sample.get('sha256') or ''
-            if expected_hash and sha256(image.read_bytes()) != expected_hash:
-                raise ValueError(f'Image SHA256 mismatch: {sample["image_path"]}')
-            start = time.perf_counter()
-            try:
-                payload, attempts = service.classify(image)
-            finally:
-                row['latency_ms'] = round((time.perf_counter()-start)*1000, 2)
-            row['attempts'] = attempts
-            row.update(evaluate_sample(sample, payload, aliases))
-        except Exception as exc:
-            row['error'] = str(exc)[:400]
-        results.append(row)
-        state = '✓' if row['top1_correct'] == 1 else ('✗' if row['status'] == 'ok' else '!')
-        print(f'[{index}/{len(samples)}] {state} {sample["expected_name"]}: {row["predicted_name"] or row["error"]}')
-        # Crash-safe partial output after every sample; no fabricated results.
-        write_csv(result_dir / 'predictions.csv', results, PREDICTION_FIELDS)
-        if args.delay and index < len(samples):
-            time.sleep(args.delay)
-    write_json(result_dir / 'run_metadata.json', {
-        'backend': args.backend, 'model': args.model if args.backend == 'local' else 'remote-service-defined',
-        'url': args.url if args.backend == 'api' else None,
-        'source_manifest': os.path.relpath(manifest_path, Path(__file__).resolve().parent.parent),
-        'attempted': len(samples),
-        'warmup': warmup_result, 'timestamp_utc': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
-        'latency_definition': 'End-to-end client request latency including network/retries for API; forward pass and preprocessing for local mode.',
+    predictions_path = result_dir / 'predictions.csv'
+    metadata_path = result_dir / 'run_metadata.json'
+    if any(result_dir.iterdir()):
+        raise SystemExit(f'{result_dir} already contains a run; choose a new --output-dir to avoid mixing executions')
+    manifest_hash = sha256(manifest_path.read_bytes())
+    dataset_files = {'manifest.csv': manifest_hash}
+    for name in ('dataset_info.json', 'source_metadata.csv'):
+        path = dataset_dir / name
+        if path.exists():
+            dataset_files[name] = sha256(path.read_bytes())
+    run_id = uuid.uuid4().hex
+    expected_ids = [sample.get('sample_id', '') for sample in samples]
+    metadata = {
+        'run_id': run_id, 'status': 'running', 'scope': 'partial' if args.max_samples is not None else 'complete',
+        'backend': args.backend, 'endpoint': args.url if args.backend == 'api' else None,
+        'model_id': args.model if args.backend == 'local' else None, 'model_revision': None,
+        'backend_model': None, 'timeout_seconds': args.timeout, 'retries': args.retries,
+        'delay_seconds': args.delay, 'warmup_enabled': bool(args.warmup),
+        'manifest_sha256': manifest_hash, 'dataset_files_sha256': dataset_files,
+        'dataset': {'source': dataset_info.get('source'), 'revision': dataset_info.get('revision'),
+                    'mode': dataset_info.get('mode'), 'selection_seed': dataset_info.get('selection_seed'),
+                    'include_forms': dataset_info.get('include_forms')},
+        'dataset_sample_count': len(read_csv(manifest_path)), 'planned_sample_count': len(samples),
+        'planned_sample_ids': expected_ids, 'max_samples': args.max_samples,
+        'attempted': 0, 'predictions_sha256': None, 'source_manifest': str(manifest_path),
+        'warmup': warmup_result,
+        'timestamp_started_utc': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),
         'unverified_training_overlap': True,
-    })
-    print(f'Results saved: {result_dir / "predictions.csv"}. Generate report with: python -m benchmark report')
+    }
+    results = []
+    write_json(metadata_path, metadata)
+    try:
+        service = (APIClient(url=args.url, timeout=args.timeout, retries=args.retries)
+                   if args.backend == 'api' else LocalModel(model_id=args.model))
+        if args.backend == 'local':
+            metadata['model_revision'] = service.revision
+            write_json(metadata_path, metadata)
+        if args.warmup:
+            path = resolved_local_path(dataset_dir, samples[0]['image_path'])
+            if path.is_file():
+                start = time.perf_counter()
+                try:
+                    warmup_payload, attempts = service.classify(path)
+                    warmup_result = {'status': 'ok', 'latency_ms': round((time.perf_counter()-start)*1000, 2), 'attempts': attempts}
+                    if isinstance(warmup_payload, dict) and isinstance(warmup_payload.get('model'), dict):
+                        model_info = warmup_payload['model']
+                        metadata['backend_model'] = model_info.get('id', metadata['backend_model'])
+                        metadata['model_revision'] = model_info.get('revision', metadata['model_revision'])
+                except Exception as exc:
+                    warmup_result = {'status': 'failed', 'error': str(exc)}
+                metadata['warmup'] = warmup_result
+                write_json(metadata_path, metadata)
+                print(f'Warm-up: {warmup_result}')
+        for index, sample in enumerate(samples, 1):
+            row = dict(sample)
+            row.update({'status': 'failed', 'predicted_name': '', 'predicted_id': '',
+                        'top1_correct': '', 'top5_correct': '', 'top5_available': 0,
+                        'model_score': '', 'latency_ms': '', 'attempts': 0,
+                        'error': '', 'failure_stage': '', 'candidates_json': '[]'})
+            try:
+                image = resolved_local_path(dataset_dir, sample['image_path'])
+                if not image.is_file():
+                    raise FileNotFoundError(f'Missing image: {sample["image_path"]}')
+                expected_hash = sample.get('sha256') or ''
+                if expected_hash and sha256(image.read_bytes()) != expected_hash:
+                    raise ValueError(f'Image SHA256 mismatch: {sample["image_path"]}')
+                start = time.perf_counter()
+                try:
+                    payload, attempts = service.classify(image)
+                finally:
+                    row['latency_ms'] = round((time.perf_counter()-start)*1000, 2)
+                row['attempts'] = attempts
+                if isinstance(payload, dict) and isinstance(payload.get('model'), dict):
+                    model_info = payload['model']
+                    metadata['backend_model'] = model_info.get('id', metadata['backend_model'])
+                    metadata['model_revision'] = model_info.get('revision', metadata['model_revision'])
+                row.update(evaluate_sample(sample, payload, aliases))
+                row['failure_stage'] = ''
+            except Exception as exc:
+                row['error'] = str(exc)[:400]
+                row['failure_stage'] = 'request' if isinstance(exc, RuntimeError) else 'response_or_input'
+            results.append(row)
+            state = '✓' if row['top1_correct'] == 1 else ('✗' if row['status'] == 'ok' else '!')
+            print(f'[{index}/{len(samples)}] {state} {sample["expected_name"]}: {row["predicted_name"] or row["error"]}')
+            # Crash-safe partial output after every sample; no fabricated results.
+            write_csv(predictions_path, results, PREDICTION_FIELDS)
+            metadata['attempted'] = len(results)
+            metadata['predictions_sha256'] = sha256(predictions_path.read_bytes())
+            write_json(metadata_path, metadata)
+            if args.delay and index < len(samples):
+                time.sleep(args.delay)
+        metadata['status'] = 'completed'
+        metadata['timestamp_completed_utc'] = __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
+        metadata['latency_definition'] = 'End-to-end client request latency including network/retries for API; forward pass and preprocessing for local mode.'
+        write_json(metadata_path, metadata)
+    except BaseException:
+        metadata['status'] = 'interrupted'
+        metadata['timestamp_interrupted_utc'] = __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
+        write_json(metadata_path, metadata)
+        raise
+    print(f'Results saved: {predictions_path}. Generate report with: python -m benchmark report --dataset-dir {dataset_dir} --output-dir {result_dir}')

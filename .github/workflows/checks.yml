@@ -10,4 +10,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: npm run verify
+      - name: Test benchmark tooling (offline fixtures)
+        run: python -m unittest discover -s tests -v
+        working-directory: evaluation
+      - name: Install lightweight backend test dependencies
+        run: python -m pip install -r requirements-test.txt
+        working-directory: backend
+      - name: Test FastAPI contract (inference mocked)
+        run: python -m unittest discover -s backend -p 'test_*.py' -v

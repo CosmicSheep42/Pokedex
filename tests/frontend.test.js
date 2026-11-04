@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { normalizePokemonName } from '../scripts/core/normalizePokemonName.js';
 import { HttpClient } from '../scripts/core/httpClient.js';
 import { classify } from '../scripts/core/classification.js';
-import { fetchData } from '../scripts/core/fetchData.js';
+import { FetchData } from '../scripts/core/fetchData.js';
+import { CONFIG } from '../config.js';
 import { validateImageFile } from '../scripts/modules/upload.js';
 import { renderBasic } from '../scripts/modules/basic.js';
 import { renderFlavorText } from '../scripts/modules/flavor.js';
@@ -37,11 +38,11 @@ test('HTTP client preserves errors, handles invalid data, and aborts slow reques
     }
 });
 
-test('classification and PokeAPI integration use the expected contracts', async () => {
+test('classification and PokeAPI integration use their configured timeouts', async () => {
     const originalFetch = globalThis.fetch;
+    const originalRequest = HttpClient.prototype.request;
     const requests = [];
     globalThis.fetch = async (url, options) => {
-        requests.push(String(url));
         const data = String(url).endsWith('/classify') ? { pokemonName: 'Deoxys' }
             : String(url).endsWith('/pokemon-species/deoxys') ? {
                 name: 'deoxys',
@@ -52,15 +53,28 @@ test('classification and PokeAPI integration use the expected contracts', async 
         if (options.method === 'POST') assert.equal(options.body.get('file').type, 'image/png');
         return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } });
     };
+    HttpClient.prototype.request = function (url, options) {
+        requests.push({ url: String(url), timeoutMs: options.timeoutMs });
+        return originalRequest.call(this, url, options);
+    };
     try {
         const file = new Blob(['image'], { type: 'image/png' });
-        const result = await new fetchData({ backendURL: 'https://example.com/classify', pokeApiBaseUrl: 'https://example.com/api', timeoutMs: 100 }).execute(file);
+        const result = await new FetchData({
+            backendURL: 'https://example.com/classify',
+            pokeApiBaseUrl: 'https://example.com/api',
+            classifierTimeoutMs: CONFIG.CLASSIFIER_TIMEOUT,
+            pokeApiTimeoutMs: CONFIG.POKEAPI_TIMEOUT
+        }).execute(file);
         assert.equal(result.prediction, 'deoxys');
-        assert.deepEqual(requests, ['https://example.com/classify', 'https://example.com/api/pokemon-species/deoxys', 'https://example.com/api/pokemon/deoxys-normal']);
+        assert.deepEqual(requests.map(({ url }) => url), ['https://example.com/classify', 'https://example.com/api/pokemon-species/deoxys', 'https://example.com/api/pokemon/deoxys-normal']);
+        assert.equal(CONFIG.CLASSIFIER_TIMEOUT, 90000);
+        assert.equal(CONFIG.POKEAPI_TIMEOUT, 12000);
+        assert.deepEqual(requests.map(({ timeoutMs }) => timeoutMs), [CONFIG.CLASSIFIER_TIMEOUT, CONFIG.POKEAPI_TIMEOUT, CONFIG.POKEAPI_TIMEOUT]);
         globalThis.fetch = async () => new Response('{}', { headers: { 'content-type': 'application/json' } });
         await assert.rejects(classify(file, '/classify', 100, new HttpClient()), { code: 'INVALID_RESPONSE' });
     } finally {
         globalThis.fetch = originalFetch;
+        HttpClient.prototype.request = originalRequest;
     }
 });
 

@@ -1,17 +1,18 @@
-import { fetchData } from "./core/fetchData.js";
+import { FetchData } from "./core/fetchData.js";
 import { renderResult } from "./UI/renderResults.js";
 import { setHandler, showScanner, createUploadButton, validateImageFile } from "./modules/upload.js";
 import { getErrorMessage } from "./core/errors.js";
 import { CONFIG } from "../config.js";
 
 let isProcessing = false;
-let FetchData = null;
+let fetchData = null;
 
 function init() {
-    FetchData = new fetchData({
+    fetchData = new FetchData({
         backendURL: CONFIG.BACKEND_URL,
         pokeApiBaseUrl: CONFIG.POKEAPI.BASE_URL,
-        timeoutMs: CONFIG.REQUEST_TIMEOUT
+        classifierTimeoutMs: CONFIG.CLASSIFIER_TIMEOUT,
+        pokeApiTimeoutMs: CONFIG.POKEAPI_TIMEOUT
     });
     
     setHandler(handleImageSelected);
@@ -51,7 +52,7 @@ async function handleImageSelected(file) {
     showStatus('');
     
     try {
-        const result = await FetchData.execute(file);
+        const result = await fetchData.execute(file);
         renderResult(result);
         setBottomToUploadMode();
     } catch (error) {

@@ -1,0 +1,2 @@
+variation,planned,successful,failed,top1_correct,top1_accuracy_percent,end_to_end_correct_percent,top5_correct,top5_measured,top5_percent,latency_ms_p50,latency_ms_p95
+hq,905,905,0,884,97.67955801104972,97.67955801104972,905,905,100.0,2101.71,5217.48

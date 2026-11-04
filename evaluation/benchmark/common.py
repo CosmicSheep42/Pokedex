@@ -6,6 +6,8 @@ import hashlib
 import json
 import math
 import re
+import os
+import tempfile
 import unicodedata
 from pathlib import Path
 
@@ -24,7 +26,7 @@ MANIFEST_FIELDS = ['sample_id', 'image_path', 'expected_name', 'expected_id', 'g
 PREDICTION_FIELDS = ['sample_id', 'image_path', 'expected_name', 'expected_id', 'generation',
                      'variation', 'form', 'status', 'predicted_name', 'predicted_id',
                      'top1_correct', 'top5_correct', 'top5_available', 'model_score',
-                     'latency_ms', 'attempts', 'error', 'candidates_json']
+                     'latency_ms', 'attempts', 'error', 'failure_stage', 'candidates_json']
 
 
 def normalize_name(name: object) -> str:
@@ -49,16 +51,30 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 
 def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open('w', encoding='utf-8', newline='') as fd:
+    with tempfile.NamedTemporaryFile('w', encoding='utf-8', newline='', dir=path.parent,
+                                     delete=False) as fd:
+        temp_path = Path(fd.name)
         writer = csv.DictWriter(fd, fieldnames=fieldnames, extrasaction='ignore')
         writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
+        writer.writerows(rows)
+    os.replace(temp_path, path)
 
 
 def write_json(path: Path, obj: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + '\n', encoding='utf-8')
+    content = json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
+    with tempfile.NamedTemporaryFile('w', encoding='utf-8', dir=path.parent, delete=False) as fd:
+        temp_path = Path(fd.name)
+        fd.write(content)
+    os.replace(temp_path, path)
+
+
+def write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile('w', encoding='utf-8', dir=path.parent, delete=False) as fd:
+        temp_path = Path(fd.name)
+        fd.write(content)
+    os.replace(temp_path, path)
 
 
 def sha256(data: bytes) -> str:
@@ -101,16 +117,6 @@ def make_label_to_id(source_rows: list[dict[str, str]]) -> dict[str, int]:
             if base_name.endswith(suffix):
                 aliases.setdefault(base_name[:-len(suffix)], species_id)
     return aliases
-
-
-def wilson_ci(successes: int, total: int, z: float = 1.96) -> list[float] | None:
-    if total == 0:
-        return None
-    p = successes / total
-    denom = 1 + z * z / total
-    mid = (p + z*z/(2*total)) / denom
-    half = z * math.sqrt((p * (1-p) + z*z/(4*total)) / total) / denom
-    return [max(0.0, mid - half), min(1.0, mid + half)]
 
 
 def percentile(values: list[float], fraction: float) -> float | None:
