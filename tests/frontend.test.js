@@ -150,10 +150,10 @@ test('sprite gallery groups collections, hides empty groups and rejects unsafe U
         versions: { 'generation-i': { red: { front_default: 'https://example.com/red.png' } },
             'generation-ii': { front_default: 'javascript:alert(1)' } }
     } });
-    assert.equal((html.match(/<option /g) || []).length, 3);
+    assert.equal((html.match(/role="option"/g) || []).length, 3);
     assert.equal((html.match(/src="https:\/\/example.com\/front.png"/g) || []).length, 2);
-    assert.match(html, /official artwork/);
-    assert.match(html, /generation i/);
+    assert.match(html, /official artwork/i);
+    assert.match(html, /Generation I</);
     assert.doesNotMatch(html, /javascript:|<details|>empty</);
     assert.match(renderSprites({}), /No sprites available/);
 });

@@ -112,6 +112,7 @@ export function showScanner() {
 
     const uploadContainer = createUploadButton();
     
+    carousel.classList.remove('has-result');
     carousel.replaceChildren();
     
     const scannerDiv = document.createElement('div');

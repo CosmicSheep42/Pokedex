@@ -1,174 +1,23 @@
-.pokemon-header {
-    text-align: center;
-    margin-top: 0.5rem;
-}
-
-.pokemon-details { margin: 0; }
-.pokemon-details > div {
-    display: grid;
-    grid-template-columns: 6.5rem minmax(0, 1fr);
-    gap: 0.75rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #d8dce0;
-    font-size: 0.85rem;
-}
-.pokemon-details dt { font-weight: 600; }
-.pokemon-details dd {
-    margin: 0;
-    overflow-wrap: anywhere;
-    text-transform: capitalize;
-}
-
-.detail-group { border-bottom: 1px solid #d8dce0; }
-.detail-group:last-child { border-bottom: 0; }
-.detail-group summary { padding: 0.9rem 0; font-size: 0.9rem; font-weight: 650; cursor: pointer; }
-.detail-group summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-.detail-group summary:hover { background: var(--card-bg); }
-.detail-group[open] { padding-bottom: 0.75rem; }
-.detail-group .pokemon-details > div:last-child { border-bottom: 0; }
-.detail-note { color: #555; font-size: 0.75rem; line-height: 1.5; }
-.variety-list { padding-left: 1.25rem; font-size: 0.85rem; text-transform: capitalize; }
-.variety-list li { padding: 0.35rem 0; overflow-wrap: anywhere; }
-
-.pokemon-name {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--title-color, #667eea);
-    margin-bottom: 0.5rem;
-}
-
-.pokemon-subtitle {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #555;
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-
-/* Info and Sprite */
-.info-sprite-row {
-    display: flex;
-    flex-wrap: wrap;
-    border-radius: 1rem;
-    background: linear-gradient(135deg, var(--card-bg) 0%, #f0f2f5 100%);
-}
-
-.info-column {
-    flex: 1;
-    min-width: 140px;
-}
-
-.sprite-column {
-    padding: 0.75rem;
-    min-width: 140px;
-}
-
-.sprite-image {
-    width: 100%;
-    max-width: 140px;
-    height: auto;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    margin: 0 auto;
-    display: block;
-}
-
-.sprite-button {
-    display: block;
-    margin: 0.3rem auto 0;
-    background: #fff;
-    border: 2px solid var(--title-color, #667eea);
-    color: var(--text-dark);
-    min-height: 32px;
-    padding: 0.3rem 0.8rem;
-    border-radius: 1.5rem;
-    font-size: 0.8rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s, opacity 0.2s;
-    width: 88px;
-}
-
-.sprite-button:hover {
-    transform: scale(1.02);
-    opacity: 0.9;
-}
-
-.sprite-button:active {
-    transform: scale(0.98);
-}
-
-.info-card {
-    padding: 0.75rem;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 0.4rem 0;
-}
-
-
-.info-label {
-    font-weight: 600;
-    color: #272b2e;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.info-value {
-    font-weight: 700;
-    color: var(--text-dark);
-    font-size: 0.85rem;
-}
-
-
-/* Type image */
-.types-container-icons {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: flex-start;
-    width: 100%;
-}
-
-
-.type-icon-wrapper {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-
-.info-item-types {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
-}
-
-.type-icon {
-    width: 88px;
-    object-fit: contain;
-    display: block;
-}
-
-@media (max-width: 380px) {
-    .info-sprite-row {
-        flex-direction: column;
-    }
-
-    .info-column,
-    .sprite-column {
-        width: 100%;
-    }
-
-    .types-container-icons {
-        justify-content: flex-start;
-    }
-}
+.pokemon-hero { padding: 20px 16px 12px; background: linear-gradient(180deg, var(--type-subtle), var(--surface-primary)); text-align: center; }
+.identity-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.national-number { color: var(--type-strong); font-size: 13px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.types-badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.type-badge { display: inline-flex; gap: 4px; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 750; text-transform: capitalize; }
+.type-badge img { width: 16px; height: 16px; object-fit: cover; object-position: left; }
+.pokemon-name { margin: 12px 0 0; color: var(--type-strong); font-size: 32px; line-height: 1.15; font-weight: 800; text-transform: capitalize; overflow-wrap: anywhere; }
+.pokemon-subtitle { color: var(--text-secondary); font-size: 13px; margin-top: 4px; }
+.artwork-stage { height: clamp(160px, 23dvh, 200px); position: relative; display: grid; place-items: center; margin: 8px 0; }
+.artwork-stage img { position: relative; width: 100%; height: 100%; max-height: 200px; object-fit: contain; z-index: 1; filter: drop-shadow(0 8px 6px #20313a18); }
+.artwork-orbit { position: absolute; height: 88%; aspect-ratio: 1; border: 22px solid var(--type-light); border-radius: 50%; opacity: .6; }
+.artwork-orbit::after { content: ''; position: absolute; width: 150%; height: 10px; background: var(--type-light); top: calc(50% - 5px); left: -25%; transform: rotate(-24deg); }
+.artwork-unavailable { position: relative; font-size: 13px; }
+.shiny-control { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--surface-secondary); border: 1px solid var(--border-subtle); }
+.shiny-control button { border: 0; min-height: 44px; min-width: 80px; border-radius: 9px; background: transparent; color: var(--text-secondary); font: 600 13px system-ui; cursor: pointer; transition: background .18s; }
+.shiny-control button[aria-pressed="true"] { background: var(--type-strong); color: var(--type-contrast); }
+.measurements { display: grid; grid-template-columns: repeat(2, 1fr); margin-top: 12px; padding: 12px; border: 1px solid var(--border-subtle); background: var(--surface-primary); border-radius: 12px; }
+.measurements div + div { border-left: 1px solid var(--border-subtle); }
+.measurements dt { color: var(--text-secondary); font-size: 11px; }
+.measurements dd { color: var(--text-primary); font-weight: 750; font-size: 18px; margin-top: 4px; }
+.measurements dd span { font-size: 13px; font-weight: 500; }
+.artwork-ready { animation: artwork-in .18s ease-out; }
+@keyframes artwork-in { from { opacity: .65; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
