@@ -21,16 +21,16 @@
 }
 
 .pokeball-btn {
-    width: 120px;
-    height: 120px;
+    width: 108px;
+    height: 108px;
     position: relative;
     flex-shrink: 0;
     cursor: pointer;
     pointer-events: auto;
-    margin-top: 3.2rem;
+    margin-top: 2.9rem;
     border-radius: 50%;
     background: linear-gradient(180deg, #9cf7ff 0%, #62deef 100%);
-    border: 8px solid #3dc3d8;
+    border: 7px solid #3dc3d8;
     transition: transform 0.18s ease;
 }
 
@@ -60,7 +60,7 @@
     content: "";
     position: absolute;
     top: 50%;
-    height: 8px;
+    height: 7px;
     transform: translateY(-50%);
     z-index: 1;
     background: #3dc3d8;
@@ -68,13 +68,13 @@
 
 .pokeball-inner::before {
     left: 0;
-    width: calc(50% - 18px);
+    width: calc(50% - 16px);
     border-radius: 999px 0 0 999px;
 }
 
 .pokeball-inner::after {
     right: 0;
-    width: calc(50% - 18px);
+    width: calc(50% - 16px);
     border-radius: 0 999px 999px 0;
 }
 
@@ -82,13 +82,13 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 50px;
-    height: 50px;
+    width: 45px;
+    height: 45px;
     transform: translate(-50%, -50%);
     border-radius: 50%;
     z-index: 2;
     background: #86f3ff;
-    border: 8px solid #3dc3d8;
+    border: 7px solid #3dc3d8;
 }
 
 .upload-source-dialog {
@@ -177,9 +177,9 @@
 
 @media (min-width: 801px) {
     .pokeball-btn:not(.scanner-bottom-upload-btn) {
-        width: clamp(120px, 18dvh, 170px);
-        height: clamp(120px, 18dvh, 170px);
-        border-width: clamp(8px, 1dvh, 10px);
+        width: clamp(108px, 16dvh, 153px);
+        height: clamp(108px, 16dvh, 153px);
+        border-width: clamp(7px, .9dvh, 9px);
     }
 
     .pokeball-button {
@@ -190,29 +190,29 @@
 
     .pokeball-inner::before,
     .pokeball-inner::after {
-        height: clamp(8px, 1dvh, 10px);
-        width: calc(50% - 22px);
+        height: clamp(7px, .9dvh, 9px);
+        width: calc(50% - 20px);
     }
 }
 
 @media (max-width: 380px) {
     .pokeball-btn {
-        width: 86px;
-        height: 86px;
-        border-width: 6px;
-        margin-top: 2.8rem;
+        width: 78px;
+        height: 78px;
+        border-width: 5px;
+        margin-top: 2.5rem;
     }
 
     .pokeball-button {
-        width: 38px;
-        height: 38px;
-        border-width: 6px;
+        width: 34px;
+        height: 34px;
+        border-width: 5px;
     }
 
     .pokeball-inner::before,
     .pokeball-inner::after {
-        height: 6px;
-        width: calc(50% - 14px);
+        height: 5px;
+        width: calc(50% - 13px);
     }
 
     .scanner-hint {

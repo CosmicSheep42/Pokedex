@@ -1,5 +1,5 @@
 import { initDragScroll } from "./scroll.js";
-import { applyColor } from "./colors.js";
+import { applyColor } from "./colors.js?v=2";
 
 function getCarousel() {
     return document.getElementById('carouselContainer');

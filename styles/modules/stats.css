@@ -23,3 +23,13 @@
 .stat-bar-bg { height: 0.5rem; background: #e6e8eb; border-radius: 1rem; overflow: hidden; }
 .stat-bar-fill { height: 100%; background: var(--title-color, #667eea); border-radius: inherit; }
 .stat-total { display: flex; justify-content: space-between; border-top: 1px solid #d8dce0; padding-top: 0.75rem; margin: 1rem 0 0.5rem; font-size: 0.9rem; }
+.stat-radar { width: 100%; max-height: 260px; display: block; }
+.radar-grid { fill: none; stroke: var(--border-subtle); stroke-width: 1; }
+.radar-values { fill: var(--type-primary); fill-opacity: .3; stroke: var(--type-strong); stroke-width: 2; }
+.stat-radar text { fill: var(--text-secondary); font: 12px system-ui; }
+.profile-label { color: var(--type-strong); font-weight: 750; margin-bottom: 8px; }
+.stat-bar-fill { background: var(--type-primary); animation: reveal-stat .2s ease-out; transform-origin: left; }
+@keyframes reveal-stat { from { transform: scaleX(.8); } to { transform: scaleX(1); } }
+.stats-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.stats-heading .stat-total { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 4px 8px; border: 0; border-radius: 999px; background: var(--type-subtle); color: var(--type-strong); font-size: 11px; white-space: nowrap; }
+.stat-name::before { content: ''; display: inline-block; width: 4px; height: 4px; background: var(--type-strong); border-radius: 50%; margin-right: 4px; }

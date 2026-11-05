@@ -1,5 +1,4 @@
 import { FetchData } from "./core/fetchData.js";
-import { renderResult } from "./UI/renderResults.js";
 import { setHandler, showScanner, createUploadButton, validateImageFile } from "./modules/upload.js";
 import { getErrorMessage } from "./core/errors.js";
 import { CONFIG } from "../config.js";
@@ -52,9 +51,11 @@ async function handleImageSelected(file) {
     showStatus('');
     
     try {
+        const { renderResult } = await import("./UI/renderResults.js");
         const result = await fetchData.execute(file);
-        renderResult(result);
+        renderResult(result, fetchData.pokeApiService);
         setBottomToUploadMode();
+        showStatus('');
     } catch (error) {
         console.error("Error identifying Pokémon:", error);
         showScanner();
@@ -67,6 +68,8 @@ async function handleImageSelected(file) {
 
 function setLoadingState(isLoading) {
     isProcessing = isLoading;
+    document.querySelector('.scanner-shell').classList.toggle('is-processing', isLoading);
+    document.getElementById('carouselContainer').setAttribute('aria-busy', String(isLoading));
     
     const uploadButtons = document.querySelectorAll('[data-pokemon-upload-trigger]');
     uploadButtons.forEach((button) => {
