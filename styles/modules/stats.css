@@ -4,7 +4,7 @@
     color: var(--text-dark);
     margin: 0 0 1rem;
     padding-top: 1.25rem;
-    border-top: 1px solid #d8dce0;
+    border-top: 3px solid var(--title-color, #667eea);
 }
 
 .stat-bar {
