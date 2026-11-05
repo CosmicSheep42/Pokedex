@@ -171,3 +171,33 @@ test('additional details show available API fields and escape external values', 
     assert.match(html, /medium fast/);
     assert.equal(renderDetails({}, null), '');
 });
+
+test('species details preserve zero values, genderless species and default varieties', async () => {
+    const { renderDetails } = await import('../scripts/modules/details.js');
+    const html = renderDetails({ base_experience: 0 }, {
+        gender_rate: -1, base_happiness: 0, capture_rate: 3, hatch_counter: 0,
+        is_legendary: true, evolves_from_species: { name: '<previous>' },
+        varieties: [{ is_default: true, pokemon: { name: 'deoxys-normal' } }, { pokemon: { name: 'deoxys-attack' } }]
+    });
+    assert.match(html, /Genderless/);
+    assert.match(html, /Legendary/);
+    assert.match(html, /3 \/ 255/);
+    assert.match(html, /Base friendship<\/dt><dd>0/);
+    assert.match(html, /Hatch cycles<\/dt><dd>0/);
+    assert.match(html, /&lt;previous&gt;/);
+    assert.match(html, /deoxys normal.*\(default\)/);
+    assert.match(renderDetails({}, { gender_rate: 1 }), /12.5% female \/ 87.5% male/);
+    assert.doesNotMatch(renderDetails({}, { gender_rate: null, capture_rate: null }), /Gender ratio|Capture rate/);
+});
+
+test('stats keep small values visible separately from bars and show total', () => {
+    const html = renderStats({ stats: [ { stat: { name: 'hp' }, base_stat: 1 }, { stat: { name: 'special-defense' }, base_stat: 45 } ] });
+    assert.match(html, /stat-value">1<\/span>/);
+    assert.match(html, /Sp. Def/);
+    assert.match(html, /<strong>46<\/strong>/);
+    assert.doesNotMatch(html, /stat-bar-fill[^>]*>1/);
+});
+
+test('flavor text attributes its game and safely handles source names', () => {
+    assert.match(renderFlavorText({ flavor_text_entries: [{ language: { name: 'en' }, flavor_text: 'Entry', version: { name: '<game>' } }] }), /Pokédex entry · &lt;game&gt;/);
+});

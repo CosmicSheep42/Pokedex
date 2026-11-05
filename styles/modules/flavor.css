@@ -1,5 +1,2 @@
-.flavor-section {
-    margin-top: -1.5rem;
-    padding: 0.75rem;
-    position: relative;
-}
+.flavor-section { line-height: 1.6; font-size: 0.9rem; }
+.flavor-source { display: block; margin-top: 0.5rem; font-size: 0.75rem; color: #555; text-transform: capitalize; }

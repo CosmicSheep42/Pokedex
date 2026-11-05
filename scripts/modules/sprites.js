@@ -27,7 +27,7 @@ export function renderSprites(data) {
         }
         collect(source);
         if (!items.length) return '';
-        return `<details class="sprite-group"><summary>${escapeHtml(readable(title))} <span class="sprite-count">(${items.length})</span></summary><div class="sprite-grid">${items.join('')}</div></details>`;
+        return `<details class="sprite-group" name="sprite-collections"><summary>${escapeHtml(readable(title))} <span class="sprite-count">(${items.length})</span></summary><div class="sprite-grid">${items.join('')}</div></details>`;
     }).join('');
-    return `<div class="divider"></div><h2 class="section-title">Sprite Gallery</h2>${panels ? '<p class="gallery-hint">Choose a collection to view its sprites.</p>' + panels : '<p>No sprites available.</p>'}`;
+    return `<h2 class="section-title">Sprite Gallery</h2>${panels ? '<p class="gallery-hint">Explore artwork and sprites by collection.</p>' + panels : '<p>No sprites available.</p>'}`;
 }

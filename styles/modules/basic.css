@@ -1,6 +1,6 @@
 .pokemon-header {
     text-align: center;
-    margin-top: 2rem;
+    margin-top: 0.5rem;
 }
 
 .pokemon-details { margin: 0; }
@@ -19,17 +19,27 @@
     text-transform: capitalize;
 }
 
+.detail-group { border-bottom: 1px solid #d8dce0; }
+.detail-group summary { padding: 0.9rem 0; font-size: 0.9rem; font-weight: 650; cursor: pointer; }
+.detail-group summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.detail-group summary:hover, .sprite-group summary:hover { background: var(--card-bg); }
+.detail-group[open] { padding-bottom: 0.75rem; }
+.detail-group .pokemon-details > div:last-child { border-bottom: 0; }
+.detail-note { color: #555; font-size: 0.75rem; line-height: 1.5; }
+.variety-list { padding-left: 1.25rem; font-size: 0.85rem; text-transform: capitalize; }
+.variety-list li { padding: 0.35rem 0; overflow-wrap: anywhere; }
+
 .pokemon-name {
     font-size: 2rem;
     font-weight: 800;
-    color: var(--title-color, #667eea);
+    color: var(--text-dark);
     margin-bottom: 0.5rem;
 }
 
 .pokemon-subtitle {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--title-color, #667eea);
+    color: #555;
     text-align: center;
     margin-bottom: 1rem;
 }
@@ -65,12 +75,13 @@
 
 .sprite-button {
     margin-top: 0.3rem;
-    background: var(--title-color, #667eea);
-    border: none;
-    color: white;
+    background: #fff;
+    border: 2px solid var(--title-color, #667eea);
+    color: var(--text-dark);
+    min-height: 44px;
     padding: 0.3rem 0.8rem;
     border-radius: 1.5rem;
-    font-size: 0.65rem;
+    font-size: 0.8rem;
     font-weight: bold;
     cursor: pointer;
     transition: transform 0.2s, opacity 0.2s;

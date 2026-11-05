@@ -18,7 +18,7 @@ export function renderFlavorText(speciesData) {
         return `
         <div class="flavor-section">
                 ${escapeHtml(cleanText)}
-            <div class="divider" style="margin-top: 1.25rem;"></div>
+            ${typeof englishFlavor.version?.name === 'string' ? `<span class="flavor-source">Pokédex entry · ${escapeHtml(englishFlavor.version.name.replace(/-/g, ' '))}</span>` : ''}
         </div>
     `;
 }   
