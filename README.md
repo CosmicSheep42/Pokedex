@@ -8,7 +8,13 @@ A browser app that identifies a Pokémon in an uploaded image and displays its P
 
 [Open the GitHub Pages app](https://cosmicsheep42.github.io/Pokedex/). The Hugging Face Space may take time to wake after inactivity.
 
-A screenshot is not included because Chromium was unavailable in the capture environment. To add a real capture, open the demo in a browser, save it as `docs/images/demo.png` (create the directory if needed), then embed it here with `![Pokédex interface](docs/images/demo.png)`.
+## Showcase
+
+The short walkthrough below follows the main user journey: upload an image, review the identified Pokémon, and explore the available data views.
+
+[![Pokédex showcase](pokedex-showcase.gif)](pokedex-showcase.gif)
+
+It highlights the Overview, Stats, Biology, Forms, and Sprites sections, including the enlarged sprite viewer. The recording uses the sample image `b.webp` and the deployed classifier API; the result can vary if the service is waking up or receives a different model response.
 
 ## Features
 
