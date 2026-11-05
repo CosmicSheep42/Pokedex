@@ -62,6 +62,7 @@ test('biology represents gender honestly, omits absent fields and supports evolu
     ] });
     assert.match(html, /&lt;eevee&gt;/);
     assert.match(html, /vaporeon/); assert.match(html, /jolteon/); assert.match(html, /water stone/);
+    assert.match(html, /class="form-status"/);
     assert.equal(evolutionConditions([]), '');
 });
 test('overview preserves zero and escapes optional facts; forms are only species varieties', () => {

@@ -35,7 +35,7 @@ export function renderSprites(data) {
         ${renderDropdown({ label: 'Sprite collection', options: collections.map((group, index) => ({ value: String(index), label: group.title, hint: String(group.items.length) })) })}
         <div id="spriteCollectionGrid" class="sprite-grid">${collections[0].items.join('')}</div>
         ${collections.map(group => `<template>${group.items.join('')}</template>`).join('')}
-    </div><dialog class="sprite-viewer" aria-labelledby="spriteViewerTitle"><button type="button" class="viewer-close" autofocus>Close</button><h2 id="spriteViewerTitle"></h2><img alt=""><p></p></dialog></article>`;
+    </div><dialog class="sprite-viewer" aria-labelledby="spriteViewerTitle"><button type="button" class="viewer-close">Close</button><h2 id="spriteViewerTitle"></h2><img alt=""><p></p></dialog></article>`;
 }
 
 export function initSpriteGallery(root = document) {

@@ -49,7 +49,7 @@ export function renderEvolution(chain, currentName = '') {
         const children = item.evolves_to?.length ? `<ul class="evo-branch${item.evolves_to.length > 1 ? ' is-split' : ''}">${item.evolves_to.map(child => node(child)).join('')}</ul>` : '';
         return `<li class="evo-node">${link}<button type="button" class="evo-card" data-species="${escapeHtml(item.species?.name)}" aria-pressed="${item.species?.name === currentName}"><span class="evo-img">${image ? `<img src="${image}" alt="" loading="lazy">` : ''}</span><span class="evo-name">${escapeHtml(readable(item.species?.name))}</span>${id ? `<span class="evo-id">#${String(id).padStart(4, '0')}</span>` : ''}</button>${children}</li>`;
     }
-    return `<ul class="evo-tree">${node(chain, true)}</ul>`;
+    return `<ul class="evo-tree">${node(chain, true)}</ul><p class="form-status" role="status"></p>`;
 }
 
 export function initEvolution(root, species, api, onSelect) {
