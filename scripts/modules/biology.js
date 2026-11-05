@@ -66,12 +66,12 @@ export function initEvolution(root, species, api, onSelect) {
             cards.forEach(card => card.addEventListener('click', async () => {
                 if (card.getAttribute('aria-pressed') === 'true' || !onSelect) return;
                 cards.forEach(item => { item.disabled = true; });
-                status.textContent = 'Loading Pokémon…';
+                if (status) status.textContent = 'Loading Pokémon…';
                 try {
                     await onSelect(card.dataset.species);
                 } catch {
                     if (!target.isConnected) return;
-                    status.textContent = 'This Pokémon could not be loaded. Select it again to retry.';
+                    if (status) status.textContent = 'This Pokémon could not be loaded. Select it again to retry.';
                     cards.forEach(item => { item.disabled = false; });
                 }
             }));

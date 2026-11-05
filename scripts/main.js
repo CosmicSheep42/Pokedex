@@ -51,7 +51,7 @@ async function handleImageSelected(file) {
     showStatus('');
     
     try {
-        const { renderResult } = await import("./UI/renderResults.js");
+        const { renderResult } = await import("./UI/renderResults.js?v=3");
         const result = await fetchData.execute(file);
         renderResult(result, fetchData.pokeApiService);
         setBottomToUploadMode();

@@ -3,7 +3,7 @@ import { renderTabs, initTabs, resultTabs } from './tabs.js';
 import { renderBasic, initSpriteToggle } from '../modules/basic.js';
 import { renderOverview, initOverview } from '../modules/overview.js';
 import { renderStats } from '../modules/stats.js';
-import { renderBiology, initEvolution } from '../modules/biology.js';
+import { renderBiology, initEvolution } from '../modules/biology.js?v=3';
 import { renderForms, initForms } from '../modules/forms.js';
 import { renderSprites, initSpriteGallery } from '../modules/sprites.js';
 import { APIService } from '../core/pokeAPI.js';
