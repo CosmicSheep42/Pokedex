@@ -2,7 +2,7 @@ import { buildCarousel } from "./carousel.js";
 import { renderBasic, initSpriteToggle } from "../modules/basic.js";
 import { renderFlavorText } from "../modules/flavor.js";
 import { renderStats } from "../modules/stats.js";
-import { renderSprites } from "../modules/sprites.js";
+import { renderSprites, initSpriteGallery } from "../modules/sprites.js";
 import { renderDetails } from "../modules/details.js";
 
 const BG_COLOR = "#ffffff";
@@ -19,7 +19,7 @@ export function renderResult(fullData) {
         { html: renderFlavorText(speciesData), bgColor: BG_COLOR },
         { html: renderStats(pokemonData), bgColor: BG_COLOR },
         { html: renderDetails(pokemonData, speciesData), bgColor: BG_COLOR },
-        { html: renderSprites(pokemonData), bgColor: BG_COLOR }
+        { html: renderSprites(pokemonData), bgColor: BG_COLOR, onRender: initSpriteGallery }
     ];
 
     buildCarousel(slides, pokemonData);

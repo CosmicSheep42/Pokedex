@@ -46,11 +46,10 @@ body {
 
 /* Divider */
 .divider {
-    width: min(260px, 100%);
-    height: 3px;
-    background: var(--title-color, #667eea);
-    border-radius: 2px;
-    margin: 0 auto 0.5rem auto;
+    width: 100%;
+    height: 1px;
+    background: #d8dce0;
+    margin: 0.75rem 0;
 }
 
 .scanner-shell {

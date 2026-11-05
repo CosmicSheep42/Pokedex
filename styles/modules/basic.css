@@ -20,9 +20,10 @@
 }
 
 .detail-group { border-bottom: 1px solid #d8dce0; }
+.detail-group:last-child { border-bottom: 0; }
 .detail-group summary { padding: 0.9rem 0; font-size: 0.9rem; font-weight: 650; cursor: pointer; }
 .detail-group summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-.detail-group summary:hover, .sprite-group summary:hover { background: var(--card-bg); }
+.detail-group summary:hover { background: var(--card-bg); }
 .detail-group[open] { padding-bottom: 0.75rem; }
 .detail-group .pokemon-details > div:last-child { border-bottom: 0; }
 .detail-note { color: #555; font-size: 0.75rem; line-height: 1.5; }

@@ -9,7 +9,7 @@ export function renderSprites(data) {
         ...Object.entries(sprites.other || {}),
         ...Object.entries(sprites.versions || {})
     ];
-    const panels = groups.map(([title, source]) => {
+    const collections = groups.map(([title, source]) => {
         const seen = new Set();
         const items = [];
         function collect(obj, path = '') {
@@ -26,8 +26,27 @@ export function renderSprites(data) {
             }
         }
         collect(source);
-        if (!items.length) return '';
-        return `<details class="sprite-group" name="sprite-collections"><summary>${escapeHtml(readable(title))} <span class="sprite-count">(${items.length})</span></summary><div class="sprite-grid">${items.join('')}</div></details>`;
-    }).join('');
-    return `<h2 class="section-title">Sprite Gallery</h2>${panels ? '<p class="gallery-hint">Explore artwork and sprites by collection.</p>' + panels : '<p>No sprites available.</p>'}`;
+        if (!items.length) return null;
+        return { title: readable(title), items };
+    }).filter(Boolean);
+    const heading = '<h2 class="section-title">Sprite Gallery</h2>';
+    if (!collections.length) return heading + '<p>No sprites available.</p>';
+    return heading + `<div class="sprite-gallery">
+        <label class="gallery-label" for="spriteCollection">Collection</label>
+        <select id="spriteCollection" class="sprite-select" aria-controls="spriteCollectionGrid">${collections.map((group, index) => `<option value="${index}">${escapeHtml(group.title)} (${group.items.length})</option>`).join('')}</select>
+        <div id="spriteCollectionGrid" class="sprite-grid">${collections[0].items.join('')}</div>
+        ${collections.map(group => `<template>${group.items.join('')}</template>`).join('')}
+    </div>`;
+}
+
+export function initSpriteGallery() {
+    const gallery = document.querySelector('.sprite-gallery');
+    if (!gallery) return;
+    const select = gallery.querySelector('select');
+    const grid = gallery.querySelector('.sprite-grid');
+    const templates = gallery.querySelectorAll('template');
+    select.addEventListener('change', () => {
+        const template = templates[Number(select.value)];
+        if (template) grid.replaceChildren(template.content.cloneNode(true));
+    });
 }
