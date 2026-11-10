@@ -35,7 +35,7 @@ export function renderSprites(data) {
         ${renderDropdown({ label: 'Sprite collection', options: collections.map((group, index) => ({ value: String(index), label: group.title, hint: String(group.items.length) })) })}
         <div id="spriteCollectionGrid" class="sprite-grid">${collections[0].items.join('')}</div>
         ${collections.map(group => `<template>${group.items.join('')}</template>`).join('')}
-    </div><dialog class="sprite-viewer" aria-labelledby="spriteViewerTitle"><button type="button" class="viewer-close">Close</button><h2 id="spriteViewerTitle"></h2><img alt=""><p></p></dialog></article>`;
+    </div><dialog class="sprite-viewer" aria-labelledby="spriteViewerTitle"><div class="sprite-viewer-shell"><header class="sprite-viewer-header"><div><span class="sprite-viewer-kicker">Sprite preview</span><h2 id="spriteViewerTitle"></h2></div><button type="button" class="viewer-close" aria-label="Close sprite preview"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></header><div class="sprite-viewer-stage"><img alt=""></div><footer class="sprite-viewer-footer"><span>Selected sprite</span><p></p></footer></div></dialog></article>`;
 }
 
 export function initSpriteGallery(root = document) {

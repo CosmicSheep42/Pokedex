@@ -62,7 +62,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .variety-card[aria-pressed="true"] { background: var(--type-subtle); border: 2px solid var(--type-strong); padding: 11px 7px; }
 .variety-card:hover { border-color: var(--type-strong); }
 .form-status { font-size: 12px; margin-top: 12px; }
-.secondary-button, .viewer-close { min-height: 44px; padding: 8px 16px; margin-top: 8px; background: var(--type-strong); color: white; border: 0; border-radius: 10px; font-weight: 650; cursor: pointer; }
+.secondary-button { min-height: 44px; padding: 8px 16px; margin-top: 8px; background: var(--type-strong); color: white; border: 0; border-radius: 10px; font-weight: 650; cursor: pointer; }
 .is-processing .scanner-top::after { color: white; }
 @media (max-width: 480px) {
     .app-container { padding: max(4px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); }
