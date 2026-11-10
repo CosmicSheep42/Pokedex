@@ -87,8 +87,8 @@ body, button, select { font-family: var(--font); }
 .gallery-label { color: var(--type-strong); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
 
 /* Buttons */
-.secondary-button, .viewer-close { background: var(--type-strong); color: #fff; border-radius: 999px; padding: 8px 22px; font: 800 14px var(--font); box-shadow: 0 4px 10px #1d1a1733; transition: transform .15s, filter .15s; }
-.secondary-button:hover, .viewer-close:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.secondary-button { background: var(--type-strong); color: #fff; border-radius: 999px; padding: 8px 22px; font: 800 14px var(--font); box-shadow: 0 4px 10px #1d1a1733; transition: transform .15s, filter .15s; }
+.secondary-button:hover { filter: brightness(1.12); transform: translateY(-1px); }
 .sprite-viewer { border-radius: 24px; }
 .form-status { color: var(--text-secondary); font-weight: 600; }
 
@@ -169,7 +169,7 @@ body, button, select { font-family: var(--font); }
 .sprite-item img { height: 120px; }
 .gallery-label { font-size: 12px; }
 .form-status { font-size: 14px; }
-.secondary-button, .viewer-close { font-size: 15px; }
+.secondary-button { font-size: 15px; }
 
 /* Evolution cards are selectable like form cards */
 button.evo-card { border: 0; font-family: var(--font); color: var(--text-primary); cursor: pointer; transition: transform .15s, box-shadow .15s; }
